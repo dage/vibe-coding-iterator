@@ -43,6 +43,7 @@ vibe-coding-iterator/
 ├── setup.sh                 # Main setup script
 ├── requirements.txt
 ├── tools/                   # Utility scripts for manual tasks (e.g., listing DeepInfra models)
+│   └── deepctl-setup.sh     # deepctl installation and version checking utilities (Mac only)
 ├── src/                     # All main Python source cod modules for
 ├── evals/                   # Model evaluation and testing scripts
 └── <project-name>/          # Sanitized user given project name
@@ -57,6 +58,7 @@ vibe-coding-iterator/
 - Aider – Autonomous iteration with custom Playwright integration
 - Conda – Project-specific isolated environments
 - Cursor IDE – Project development (.cursor/rules)
+- deepctl – Command line tool for DeepInfra (Mac only, will be automatically installed during setup if not present and user gives permission)
 
 ## Setup
 
