@@ -11,6 +11,7 @@ Key differentiators:
 1. **Vision-guided iteration**: Vision models evaluate visual output and guide autonomous improvements, removing humans from the feedback loop. Focus on single image analysis with animation analysis as ongoing experimental feature.
 2. **Open source model focus**: Leverages cost-effective open source models instead of expensive proprietary frontier models.
 3. **Unified model provider**: Single API provider (DeepInfra) and required API key enables assumptions about specific models availability and provides opportunities to use AI models as replacements for traditional software logic throughout the system. It also simplifies the whole process by sharing an API credits pool across the project and getting invoices from a single provider.
+4. **Future Proof**: This system is meant to take over where the code generation models stop after single-shotting, to get that extra performance beyond what the model can do on itself, so as the models keep improving, this system is meant to raise the ceiling in terms what can be achieved by vibe coding.
 
 The system can run autonomously for extended periods while allowing developer interruption for guidance changes, manual coding takeover, context management or switching models.
 
