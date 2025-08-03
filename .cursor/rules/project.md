@@ -27,6 +27,8 @@ Use internet search for up-to-date information on all technologies and libraries
 - Simple function signatures - no parameter passing of config
 - stdout logging only
 - Terminal-based interaction only
+- Use Rich for all terminal formatting, colors, progress bars, and UI effects
+- Never use tqdm, prompt-toolkit, or similar terminal frameworks - Rich is the only approved terminal enhancement library
 - Self-documenting code with minimal comments
 
 ## Architecture Requirements

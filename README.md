@@ -59,6 +59,7 @@ vibe-coding-iterator/
 - Conda – Project-specific isolated environments
 - Cursor IDE – Project development (.cursor/rules)
 - deepctl – Command line tool for DeepInfra (Mac only, will be automatically installed during setup if not present and user gives permission)
+- Rich – Terminal formatting and UI capabilities (colors, progress bars, tables, etc.)
 
 ## Setup
 
