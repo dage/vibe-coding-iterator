@@ -45,7 +45,11 @@ vibe-coding-iterator/
 ├── setup.sh                 # Main setup script
 ├── requirements.txt
 ├── tools/                   # Utility scripts for manual tasks (e.g., listing DeepInfra models)
-│   └── deepctl-setup.sh     # deepctl installation and version checking utilities (Mac only)
+│   ├── deepctl-setup.sh     # deepctl installation and version checking utilities (Mac only)
+│   └── list_models.sh       # List and analyze DeepInfra models with HuggingFace metadata
+├── docs/                    # Project documentation
+│   ├── roadmap.md           # Development roadmap and limitations
+│   └── ui-guidelines.md     # Terminal UI standards for Rich library usage
 ├── src/                     # All main Python source cod modules for
 ├── evals/                   # Model evaluation and testing scripts
 └── <project-name>/          # Sanitized user given project name
@@ -61,7 +65,7 @@ vibe-coding-iterator/
 - Conda – Project-specific isolated environments
 - Cursor IDE – Project development (.cursor/rules)
 - deepctl – Command line tool for DeepInfra (Mac only, will be automatically installed during setup if not present and user gives permission)
-- Rich – Terminal formatting and UI capabilities (colors, progress bars, tables, etc.)
+- Rich – Terminal formatting and UI capabilities (colors, progress bars, tables, etc.) with standardized styling per docs/ui-guidelines.md
 
 ## Setup
 
@@ -109,9 +113,14 @@ The system operates autonomously through vision-guided iterations. Developers ca
 
 The system can resume autonomous iteration after manual interventions and git commits, maintaining workflow continuity.
 
-## Configuration
+## Tools
 
-The setup script generates a `.env` file with `VIBES_` prefixed environment variables. Each time you start a vibe-coding session, that file is loaded. Edit `.env` to adjust default models, iteration limits, API keys, and other settings.
+The `tools/` directory contains utility scripts for manual tasks:
+
+- **`deepctl-setup.sh`**: Install and configure deepctl CLI tool for DeepInfra (Mac only)
+- **`list_models.sh`**: List DeepInfra models generation models with HuggingFace metadata, popularity metrics, and relevant tags. Proprietary models (Gemini/Anthropic) are greyed out per the roadmap.
+
+## Configuration
 
 Key environment variables (among others in the configuration):
 - `VIBES_API_KEY` - DeepInfra API key
