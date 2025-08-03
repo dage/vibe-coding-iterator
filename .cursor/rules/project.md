@@ -31,6 +31,7 @@ Use internet search for up-to-date information on all technologies and libraries
 - Never use tqdm, prompt-toolkit, or similar terminal frameworks - Rich is the only approved terminal enhancement library
 - Never create UI that uses keyboard controls like arrow keys.
 - Self-documenting code with minimal comments
+- When developing new features, always try to find a way to test it and verify the result before starting implementation, by making a test script or similar, then implement it while iterating on the test
 
 ## Architecture Requirements
 - Core API modules shared between evals and iteration system
