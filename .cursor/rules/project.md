@@ -12,7 +12,7 @@ Read README.md in each new chat session.
 Use internet search for up-to-date information on all technologies and libraries before coding.
 
 ## Git
-- Never auto-commit to git
+- Never commit to git but allow the human developer to do code review and commit
 - Always write commit headers as feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert [optional-scope]: imperative summary per Conventional Commits 1.0.0; keep header ≤50 chars, body optional, add ! + BREAKING CHANGE: footer for API breaks, one logical change per commit
 - When asked to suggest commit messages or when useful, use git commands to review changes and suggest appropriate commit messages following the above format
 
@@ -29,6 +29,7 @@ Use internet search for up-to-date information on all technologies and libraries
 - Terminal-based interaction only
 - Use Rich for all terminal formatting, colors, progress bars, and UI effects
 - Never use tqdm, prompt-toolkit, or similar terminal frameworks - Rich is the only approved terminal enhancement library
+- Never create UI that uses keyboard controls like arrow keys.
 - Self-documenting code with minimal comments
 
 ## Architecture Requirements
@@ -41,7 +42,7 @@ Use internet search for up-to-date information on all technologies and libraries
 ## DeepInfra Integration
 - Single model provider only
 - All API calls through src/deepinfra_client.py
-- Token usage tracking
+- Token usage and cost tracking
 - Response validation before processing
 
 ## Autonomous Loop Structure
@@ -53,4 +54,4 @@ Use internet search for up-to-date information on all technologies and libraries
 6. Continue or await intervention
 
 ## State Continuity
-System must resume autonomous iteration after manual interventions and git commits.
+Always pull from git after a human has done manual intervention to get the most up-to-date version of the project files.
