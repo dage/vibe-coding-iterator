@@ -15,6 +15,8 @@ Key differentiators:
 
 The system can run autonomously for extended periods while allowing developer interruption for guidance changes, manual coding takeover, context management or switching models.
 
+**See [docs/roadmap.md](docs/roadmap.md) for current limitations and future development phases.**
+
 ## Design Guidelines
 
 This project prioritizes **simplicity and modularity** to maximize focus on AI model optimization and workflow experimentation rather than complex codebase maintenance:
