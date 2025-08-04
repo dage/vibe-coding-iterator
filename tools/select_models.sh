@@ -49,43 +49,55 @@ echo
 # Function to get detailed model info
 get_model_details() {
     local index=$1
-    echo
-    echo "Getting detailed information for model #$index..."
-    python3 "$INSPECT_PY" --output "$TMP" --query "?$index"
-    echo
-}
-
-# Function to handle user input with detailed queries
-handle_model_selection() {
-    local category=$1
-    local prompt=$2
-    
-    while true; do
-        read -rp "$prompt" input
-        
-        # Check if user wants detailed info
-        if [[ "$input" =~ ^\?[0-9]+$ ]]; then
-            local index=${input#?}
-            get_model_details "$index"
-            continue
-        fi
-        
-        # Validate input format for model selection
-        if [[ -n "$input" ]] && [[ ! "$input" =~ ^[0-9,[:space:]]*$ ]]; then
-            echo "✗ Invalid input format. Use comma-separated numbers (e.g., 1,2,3) or '?<number>' for details"
-            continue
-        fi
-        
-        echo "$input"
-        break
-    done
+    echo >&2
+    echo "Getting detailed information for model #$index..." >&2
+    python3 "$INSPECT_PY" --output "$TMP" --query "?$index" >&2
+    echo >&2
 }
 
 # Get vision models
-vis=$(handle_model_selection "vision" "Enter indices for **VISION** models: ")
+echo "Enter indices for **VISION** models: "
+while true; do
+    read -rp "> " vis_input
+    
+    # Check if user wants detailed info
+    if [[ "$vis_input" =~ ^\?[0-9]+$ ]]; then
+        index=${vis_input#?}
+        get_model_details "$index"
+        continue
+    fi
+    
+    # Validate input format for model selection
+    if [[ -n "$vis_input" ]] && [[ ! "$vis_input" =~ ^[0-9,[:space:]]*$ ]]; then
+        echo "✗ Invalid input format. Use comma-separated numbers (e.g., 1,2,3) or '?<number>' for details" >&2
+        continue
+    fi
+    
+    vis="$vis_input"
+    break
+done
 
-# Get code models  
-cod=$(handle_model_selection "code" "Enter indices for **CODE**   models: ")
+# Get code models
+echo "Enter indices for **CODE**   models: "
+while true; do
+    read -rp "> " cod_input
+    
+    # Check if user wants detailed info
+    if [[ "$cod_input" =~ ^\?[0-9]+$ ]]; then
+        index=${cod_input#?}
+        get_model_details "$index"
+        continue
+    fi
+    
+    # Validate input format for model selection
+    if [[ -n "$cod_input" ]] && [[ ! "$cod_input" =~ ^[0-9,[:space:]]*$ ]]; then
+        echo "✗ Invalid input format. Use comma-separated numbers (e.g., 1,2,3) or '?<number>' for details" >&2
+        continue
+    fi
+    
+    cod="$cod_input"
+    break
+done
 
 # 2-4  rewrite config
 new_created=$(timestamp)

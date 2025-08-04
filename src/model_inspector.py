@@ -31,7 +31,7 @@ from rich import box
 from typing import Any
 
 _FIELDS = [
-    "index", "id", "token_cost", "code_hint", "vision_hint",
+    "index", "id", "token_cost", "hints",
     "downloads", "likes", "created", "updated", "license"
 ]
 
@@ -247,6 +247,7 @@ def _process_model(args: tuple) -> dict:
         progress_callback(worker_id, "🔍", f"Analyzing capabilities for {mid[:30]}{'...' if len(mid) > 30 else ''}")
         code_hint = _get_code_capability(mid, hf)
         vision_hint = _get_vision_capability(mid, hf)
+        hints = (code_hint + " " + vision_hint).strip()
         
         # Step 4: Complete
         progress_callback(worker_id, "✅", f"Completed processing {mid[:30]}{'...' if len(mid) > 30 else ''}")
@@ -256,8 +257,7 @@ def _process_model(args: tuple) -> dict:
             "index": idx,
             "id": mid,
             "token_cost": token_cost,
-            "code_hint": code_hint,
-            "vision_hint": vision_hint,
+            "hints": hints,
             "downloads": hf.get("downloads", "—"),
             "likes": hf.get("likes", "—"),
             "created": (hf.get("createdAt") or "")[:10],
@@ -379,6 +379,7 @@ def main() -> None:
             console.print(f"[red]✗ Invalid query format: {args.query}. Use '?<number>' (e.g., '?5')[/red]")
             sys.exit(1)
     
+    # If no query, proceed with building catalog
     if args.limit:
         model_list = model_list[:args.limit]
     
@@ -441,11 +442,11 @@ def main() -> None:
         table.add_column("Index", justify="right", style="bright_blue")
         table.add_column("Model", no_wrap=True, style="cyan")
         table.add_column("$/M", justify="right", style="bright_blue")
-        table.add_column("Code", justify="center", style="green")
-        table.add_column("Vision", justify="center", style="yellow")
+        table.add_column("Hints", justify="center", style="green")
         table.add_column("Downloads", justify="right", style="bright_blue")
-        table.add_column("❤️", justify="right", style="red")
+        table.add_column("❤️", justify="center", style="bright_blue")
         table.add_column("Created", style="dim")
+        table.add_column("Updated", style="dim")
         
         # Add rows
         for r in records:
@@ -453,11 +454,11 @@ def main() -> None:
                 str(r["index"]),
                 r["id"],
                 str(r["token_cost"]),
-                r["code_hint"],
-                r["vision_hint"],
+                r["hints"],
                 str(r["downloads"]),
                 str(r["likes"]),
-                r["created"]
+                r["created"],
+                r["updated"]
             ]
             table.add_row(*row_data)
         
