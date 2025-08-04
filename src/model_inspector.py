@@ -27,11 +27,12 @@ from rich.layout import Layout
 from rich.panel import Panel
 from rich.table import Table
 from rich.console import Group
+from rich import box
 from typing import Any
 
 _FIELDS = [
-    "index", "id", "token_cost", "capabilities",
-    "downloads", "likes", "created", "updated", "license", "notes"
+    "index", "id", "token_cost", "code_hint", "vision_hint",
+    "downloads", "likes", "created", "updated", "license"
 ]
 
 # ---------- internal helpers ----------
@@ -70,38 +71,164 @@ def _hf_meta(mid: str) -> dict:
             time.sleep(2)
     return {}
 
-def _caps(hf: dict) -> str:
+def _get_code_capability(mid: str, hf: dict) -> str:
+    """Determine if model has code generation capabilities"""
     tags = hf.get("tags", [])
     pipeline = hf.get("pipeline_tag") or ""
-    mtype = hf.get("model_type") or hf.get("library_name") or ""
-    out = ", ".join(dict.fromkeys([pipeline, mtype, *tags]))     # uniq-preserve
-    # Limit to 5 most relevant tags for table display
-    if len(out) > 60:
-        parts = out.split(", ")
-        if len(parts) > 5:
-            out = ", ".join(parts[:5]) + "…"
-        else:
-            out = out[:57] + "…"
-    return out
-
-_GREPS = (
-    "code", "coder", "sql", "human-eval", "pass@", "vision", "multimodal",
-    "image", "ocr", "vlm", "benchmark", "leaderboard"
-)
-
-def _notes(mid: str) -> str:
-    try:
-        txt = requests.get(f"https://huggingface.co/{mid}/raw/main/README.md",
-                           timeout=5).text.lower()
-        lines = [ln.strip() for ln in txt.splitlines()
-                 if any(g in ln for g in _GREPS)]
-        notes = " | ".join(lines[:2])
-        # Truncate notes for table display
-        if len(notes) > 40:
-            notes = notes[:37] + "…"
-        return notes
-    except Exception:
+    
+    # Check for code-related tags
+    code_tags = ["code", "coder", "sql", "programming", "code-generation"]
+    vision_tags = ["vision", "multimodal", "image", "ocr", "vlm", "image-to-text"]
+    
+    # Check pipeline tags
+    if any(tag in pipeline.lower() for tag in code_tags):
+        return "💻"
+    
+    # Check model tags
+    if any(tag.lower() in code_tags for tag in tags):
+        return "💻"
+    
+    # Check for vision capabilities (exclude from code)
+    if any(tag.lower() in vision_tags for tag in tags):
         return ""
+    
+    # Check README for code-related content
+    try:
+        readme_url = f"https://huggingface.co/{mid}/raw/main/README.md"
+        readme_text = requests.get(readme_url, timeout=5).text.lower()
+        
+        # Look for code-related keywords
+        code_keywords = [
+            "code generation", "programming", "human-eval", "pass@", "swe-bench",
+            "code completion", "code synthesis", "software engineering", "coding",
+            "program synthesis", "code understanding", "code analysis"
+        ]
+        
+        if any(keyword in readme_text for keyword in code_keywords):
+            return "💻"
+            
+    except Exception:
+        pass
+    
+    return ""
+
+def _get_vision_capability(mid: str, hf: dict) -> str:
+    """Determine if model has vision/multimodal capabilities"""
+    tags = hf.get("tags", [])
+    pipeline = hf.get("pipeline_tag") or ""
+    
+    # Check for vision-related tags
+    vision_tags = ["vision", "multimodal", "image", "ocr", "vlm", "image-to-text", "image-generation"]
+    
+    # Check pipeline tags
+    if any(tag in pipeline.lower() for tag in vision_tags):
+        return "👁️"
+    
+    # Check model tags
+    if any(tag.lower() in vision_tags for tag in tags):
+        return "👁️"
+    
+    # Check README for vision-related content
+    try:
+        readme_url = f"https://huggingface.co/{mid}/raw/main/README.md"
+        readme_text = requests.get(readme_url, timeout=5).text.lower()
+        
+        # Look for vision-related keywords
+        vision_keywords = [
+            "vision", "multimodal", "image", "ocr", "visual", "image-to-text",
+            "image understanding", "computer vision", "visual language model",
+            "image generation", "image captioning", "visual reasoning"
+        ]
+        
+        if any(keyword in readme_text for keyword in vision_keywords):
+            return "👁️"
+            
+    except Exception:
+        pass
+    
+    return ""
+
+def _get_detailed_model_info(mid: str, index: int) -> dict:
+    """Get detailed information about a specific model"""
+    console = Console()
+    
+    console.print(f"\n[bold cyan]Detailed Information for Model #{index}: {mid}[/bold cyan]")
+    console.print("=" * 80)
+    
+    # Get HuggingFace metadata
+    console.print("[yellow]Fetching HuggingFace metadata...[/yellow]")
+    hf = _hf_meta(mid)
+    
+    if not hf:
+        console.print("[red]✗ Failed to fetch model metadata[/red]")
+        return {}
+    
+    # Get DeepInfra pricing
+    console.print("[yellow]Fetching DeepInfra pricing...[/yellow]")
+    token_cost = _deepinfra_price(mid)
+    
+    # Get README content
+    console.print("[yellow]Fetching README content...[/yellow]")
+    readme_content = ""
+    try:
+        readme_url = f"https://huggingface.co/{mid}/raw/main/README.md"
+        readme_content = requests.get(readme_url, timeout=10).text
+    except Exception:
+        readme_content = "Unable to fetch README"
+    
+    # Create detailed info table
+    table = Table(title=f"Model #{index}: {mid}", box=box.ROUNDED)
+    table.add_column("Property", style="bold cyan")
+    table.add_column("Value", style="white")
+    
+    # Basic info
+    table.add_row("Model ID", mid)
+    table.add_row("Token Cost", f"${token_cost}/M tokens")
+    table.add_row("Downloads", str(hf.get("downloads", "—")))
+    table.add_row("Likes", f"❤️ {hf.get('likes', '—')}")
+    table.add_row("Created", hf.get("createdAt", "—"))
+    table.add_row("Updated", hf.get("lastModified", "—"))
+    table.add_row("License", hf.get("license", "—"))
+    table.add_row("Pipeline Tag", hf.get("pipeline_tag", "—"))
+    table.add_row("Model Type", hf.get("model_type", "—"))
+    
+    # Capabilities
+    code_hint = _get_code_capability(mid, hf)
+    vision_hint = _get_vision_capability(mid, hf)
+    capabilities = []
+    if code_hint:
+        capabilities.append("Code Generation")
+    if vision_hint:
+        capabilities.append("Vision/Multimodal")
+    if not capabilities:
+        capabilities.append("Text Generation")
+    
+    table.add_row("Capabilities", ", ".join(capabilities))
+    
+    # Tags
+    tags = hf.get("tags", [])
+    if tags:
+        table.add_row("Tags", ", ".join(tags[:10]) + ("..." if len(tags) > 10 else ""))
+    
+    console.print(table)
+    
+    # Show README excerpt
+    if readme_content and readme_content != "Unable to fetch README":
+        console.print(f"\n[bold cyan]README Excerpt:[/bold cyan]")
+        console.print("=" * 80)
+        # Show first 500 characters of README
+        excerpt = readme_content[:500]
+        if len(readme_content) > 500:
+            excerpt += "..."
+        console.print(Panel(excerpt, title="README.md", border_style="blue"))
+    
+    return {
+        "index": index,
+        "id": mid,
+        "token_cost": token_cost,
+        "hf_metadata": hf,
+        "readme_content": readme_content
+    }
 
 def _process_model(args: tuple) -> dict:
     """Process a single model - used by worker threads"""
@@ -116,9 +243,10 @@ def _process_model(args: tuple) -> dict:
         progress_callback(worker_id, "💰", f"Getting DeepInfra pricing for {mid[:30]}{'...' if len(mid) > 30 else ''}")
         token_cost = _deepinfra_price(mid)
         
-        # Step 3: Get notes
-        progress_callback(worker_id, "📝", f"Extracting notes from README for {mid[:30]}{'...' if len(mid) > 30 else ''}")
-        notes = _notes(mid)
+        # Step 3: Get capabilities
+        progress_callback(worker_id, "🔍", f"Analyzing capabilities for {mid[:30]}{'...' if len(mid) > 30 else ''}")
+        code_hint = _get_code_capability(mid, hf)
+        vision_hint = _get_vision_capability(mid, hf)
         
         # Step 4: Complete
         progress_callback(worker_id, "✅", f"Completed processing {mid[:30]}{'...' if len(mid) > 30 else ''}")
@@ -128,13 +256,13 @@ def _process_model(args: tuple) -> dict:
             "index": idx,
             "id": mid,
             "token_cost": token_cost,
-            "capabilities": _caps(hf),
+            "code_hint": code_hint,
+            "vision_hint": vision_hint,
             "downloads": hf.get("downloads", "—"),
             "likes": hf.get("likes", "—"),
             "created": (hf.get("createdAt") or "")[:10],
             "updated": (hf.get("lastModified") or "")[:10],
-            "license": hf.get("license", "—"),
-            "notes": notes
+            "license": hf.get("license", "—")
         }
         
         return {"worker_id": worker_id, "status": "✅", "model": mid, "record": rec}
@@ -214,6 +342,7 @@ def main() -> None:
     ap.add_argument("--format", choices=["json", "markdown-table"], default="json")
     ap.add_argument("--limit", type=int, help="Limit number of models to process")
     ap.add_argument("--workers", type=int, default=10, help="Number of worker threads")
+    ap.add_argument("--query", type=str, help="Query specific model by index (e.g., '?5')")
     args = ap.parse_args()
 
     console = Console()
@@ -233,6 +362,22 @@ def main() -> None:
     if not model_list:
         console.print("[yellow]⚠ No models found[/yellow]", file=sys.stderr)
         sys.exit(1)
+    
+    # Handle query for specific model
+    if args.query and args.query.startswith('?'):
+        try:
+            index = int(args.query[1:])
+            if index < 1 or index > len(model_list):
+                console.print(f"[red]✗ Invalid model index: {index}. Available range: 1-{len(model_list)}[/red]")
+                sys.exit(1)
+            
+            model_id = model_list[index - 1]  # Convert to 0-based index
+            _get_detailed_model_info(model_id, index)
+            return
+            
+        except ValueError:
+            console.print(f"[red]✗ Invalid query format: {args.query}. Use '?<number>' (e.g., '?5')[/red]")
+            sys.exit(1)
     
     if args.limit:
         model_list = model_list[:args.limit]
@@ -285,22 +430,22 @@ def main() -> None:
         
         # Create table with UI guidelines styling
         table = Table(
-            title=f"Available Models ({len(records)} models)",
+            title=f"Available Models ({len(records)} models) - Use '?<index>' for detailed info",
             box=box.ROUNDED,
             show_header=True,
             header_style="bold",
             width=None
         )
         
-        # Add columns with appropriate styling - full information for normal terminals
+        # Add columns with appropriate styling - compact table
         table.add_column("Index", justify="right", style="bright_blue")
         table.add_column("Model", no_wrap=True, style="cyan")
         table.add_column("$/M", justify="right", style="bright_blue")
-        table.add_column("Capabilities")
+        table.add_column("Code", justify="center", style="green")
+        table.add_column("Vision", justify="center", style="yellow")
         table.add_column("Downloads", justify="right", style="bright_blue")
-        table.add_column("Likes", justify="right", style="bright_blue")
-        table.add_column("Updated")
-        table.add_column("Notes")
+        table.add_column("❤️", justify="right", style="red")
+        table.add_column("Created", style="dim")
         
         # Add rows
         for r in records:
@@ -308,11 +453,11 @@ def main() -> None:
                 str(r["index"]),
                 r["id"],
                 str(r["token_cost"]),
-                r["capabilities"],
+                r["code_hint"],
+                r["vision_hint"],
                 str(r["downloads"]),
                 str(r["likes"]),
-                r["updated"],
-                r["notes"]
+                r["created"]
             ]
             table.add_row(*row_data)
         

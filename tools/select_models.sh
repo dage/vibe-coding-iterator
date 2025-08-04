@@ -39,20 +39,53 @@ if [[ ! -f "$TMP" ]] || [[ ! -s "$TMP" ]]; then
 fi
 echo
 
-# 2-3  gather user choices by index (comma-separated)
-read -rp "Enter indices for **VISION** models: " vis
-read -rp "Enter indices for **CODE**   models: " cod
+# 2-3  interactive model selection with detailed info option
+echo "Interactive model selection:"
+echo "- Enter model indices (comma-separated) for each category"
+echo "- Use '?<index>' to get detailed information about a specific model"
+echo "- Example: '?5' to see details for model #5"
+echo
 
-# Validate input format
-if [[ ! "$vis" =~ ^[0-9,[:space:]]*$ ]] && [[ -n "$vis" ]]; then
-    echo "✗ Invalid vision models input format. Use comma-separated numbers (e.g., 1,2,3)"
-    exit 1
-fi
+# Function to get detailed model info
+get_model_details() {
+    local index=$1
+    echo
+    echo "Getting detailed information for model #$index..."
+    python3 "$INSPECT_PY" --output "$TMP" --query "?$index"
+    echo
+}
 
-if [[ ! "$cod" =~ ^[0-9,[:space:]]*$ ]] && [[ -n "$cod" ]]; then
-    echo "✗ Invalid code models input format. Use comma-separated numbers (e.g., 1,2,3)"
-    exit 1
-fi
+# Function to handle user input with detailed queries
+handle_model_selection() {
+    local category=$1
+    local prompt=$2
+    
+    while true; do
+        read -rp "$prompt" input
+        
+        # Check if user wants detailed info
+        if [[ "$input" =~ ^\?[0-9]+$ ]]; then
+            local index=${input#?}
+            get_model_details "$index"
+            continue
+        fi
+        
+        # Validate input format for model selection
+        if [[ -n "$input" ]] && [[ ! "$input" =~ ^[0-9,[:space:]]*$ ]]; then
+            echo "✗ Invalid input format. Use comma-separated numbers (e.g., 1,2,3) or '?<number>' for details"
+            continue
+        fi
+        
+        echo "$input"
+        break
+    done
+}
+
+# Get vision models
+vis=$(handle_model_selection "vision" "Enter indices for **VISION** models: ")
+
+# Get code models  
+cod=$(handle_model_selection "code" "Enter indices for **CODE**   models: ")
 
 # 2-4  rewrite config
 new_created=$(timestamp)
