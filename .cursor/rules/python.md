@@ -7,7 +7,10 @@ description: Python development patterns and coding standards
 # Python Development Rules
 
 ## Code Patterns
-- Use src/deepinfra_client.py for all API calls
+- Strive for self contained python modules that have no or minim side effects.
+- Any side effects should be documented in the file header comments
+- All model queries (vision and code generation) handled by src/model_client.py
+- src/model_client.py loads model config from config folder on initialization
 - Load VIBES_ environment variables at startup
 - Handle API failures gracefully with fallbacks
 

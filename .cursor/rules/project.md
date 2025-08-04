@@ -22,6 +22,7 @@ Use internet search for up-to-date information on all technologies and libraries
 - Ask permission before installing 3rd party software (pip packages are auto-approved)
 
 ## Code Standards
+- Every script and python file should have a comment with the relative path and filename on the first line.
 - Type hints on all functions
 - Environment variables for configuration (VIBES_ prefix, uppercase)
 - Simple function signatures - no parameter passing of config
