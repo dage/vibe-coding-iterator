@@ -51,6 +51,42 @@ This document establishes UI standards for the Vibe Coding Iterator project's te
 - **Width**: `width=None` and `bar_width=None` for full width
 - **Task description**: Update dynamically without color markup
 
+#### Multi-Line Progress Animation (Recommended)
+For complex operations with multiple steps, use a 3-line layout:
+1. **Line 1**: Static message (e.g., "Building model catalogue (this may take a moment)...")
+2. **Line 2**: Overall progress bar with `SpinnerColumn()` + `TextColumn()` + `BarColumn()` + percentage + counts + `TimeElapsedColumn()`
+3. **Line 3**: Individual step progress with `SpinnerColumn()` + `TextColumn()` for current operation
+
+**Implementation pattern:**
+```python
+console.print("Building model catalogue (this may take a moment)...")
+
+with Progress(
+    SpinnerColumn(),
+    TextColumn("[progress.description]{task.description}"),
+    BarColumn(bar_width=None, complete_style="white", finished_style="green"),
+    TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+    TextColumn("({task.completed}/{task.total})"),
+    TimeElapsedColumn(),
+    console=console,
+    transient=True
+) as progress:
+    overall_task = progress.add_task("Building model catalogue", total=total_items)
+    
+    for idx, item in enumerate(items, 1):
+        progress.update(overall_task, completed=idx-1, description=f"Building model catalogue ({idx}/{total_items})")
+        
+        model_task = progress.add_task(f"Processing {item}", total=None)
+        # ... process item ...
+        progress.remove_task(model_task)
+```
+
+**Key features:**
+- **Transient display**: `transient=True` for temporary progress
+- **Dynamic updates**: Update task descriptions for each step
+- **Clean transitions**: Remove individual tasks when complete
+- **Visual feedback**: Spinner + progress bar + timing for comprehensive status
+
 ### Panels
 - **Border style**: Always use `border_style="white"`
 - **Title**: Include descriptive titles (default white text)
