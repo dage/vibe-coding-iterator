@@ -10,14 +10,24 @@ either JSON or a markdown table (one row per model).
 """
 import argparse, json, subprocess, sys, time, requests
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from threading import Lock
+import queue
+from datetime import datetime
 
 # Check dependencies first
 from check_deps import ensure_dependencies
 ensure_dependencies(["rich", "deepctl", "requests"])
 
 from rich.console import Console
-from rich.progress import Progress, BarColumn, TextColumn, TimeElapsedColumn
+from rich.progress import Progress, BarColumn, TextColumn, TimeElapsedColumn, SpinnerColumn
 from rich.text import Text
+from rich.live import Live
+from rich.layout import Layout
+from rich.panel import Panel
+from rich.table import Table
+from rich.console import Group
+from typing import Any
 
 _FIELDS = [
     "index", "id", "token_cost", "capabilities",
@@ -93,6 +103,109 @@ def _notes(mid: str) -> str:
     except Exception:
         return ""
 
+def _process_model(args: tuple) -> dict:
+    """Process a single model - used by worker threads"""
+    idx, mid, worker_id, progress_callback = args
+    
+    try:
+        # Step 1: Get HuggingFace metadata
+        progress_callback(worker_id, "🔄", f"Querying HuggingFace API for {mid[:30]}{'...' if len(mid) > 30 else ''}")
+        hf = _hf_meta(mid)
+        
+        # Step 2: Get DeepInfra pricing
+        progress_callback(worker_id, "💰", f"Getting DeepInfra pricing for {mid[:30]}{'...' if len(mid) > 30 else ''}")
+        token_cost = _deepinfra_price(mid)
+        
+        # Step 3: Get notes
+        progress_callback(worker_id, "📝", f"Extracting notes from README for {mid[:30]}{'...' if len(mid) > 30 else ''}")
+        notes = _notes(mid)
+        
+        # Step 4: Complete
+        progress_callback(worker_id, "✅", f"Completed processing {mid[:30]}{'...' if len(mid) > 30 else ''}")
+        
+        # Create record
+        rec = {
+            "index": idx,
+            "id": mid,
+            "token_cost": token_cost,
+            "capabilities": _caps(hf),
+            "downloads": hf.get("downloads", "—"),
+            "likes": hf.get("likes", "—"),
+            "created": (hf.get("createdAt") or "")[:10],
+            "updated": (hf.get("lastModified") or "")[:10],
+            "license": hf.get("license", "—"),
+            "notes": notes
+        }
+        
+        return {"worker_id": worker_id, "status": "✅", "model": mid, "record": rec}
+        
+    except Exception as e:
+        progress_callback(worker_id, "❌", f"Failed processing {mid[:30]}{'...' if len(mid) > 30 else ''} - {str(e)}")
+        return {"worker_id": worker_id, "status": "❌", "model": mid, "error": str(e)}
+
+class UnifiedDisplay:
+    """Single Live display showing progress bar and worker status lines"""
+    
+    def __init__(self, num_workers: int, total_subtasks: int):
+        self.num_workers = num_workers
+        self.total_subtasks = total_subtasks
+        self.worker_statuses = {i: "⏳ Idle" for i in range(num_workers)}
+        self.completed_subtasks = 0
+        self.lock = Lock()
+        
+        # Create progress bar
+        self.progress = Progress(
+            BarColumn(bar_width=None, complete_style="white", finished_style="green"),
+            TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+            TextColumn("({task.completed}/{task.total})"),
+            TimeElapsedColumn(),
+            transient=False
+        )
+        self.progress_task = self.progress.add_task("", total=total_subtasks)
+        
+        # Create worker progress bars with spinners
+        self.worker_progress = Progress(
+            SpinnerColumn(),
+            TextColumn("{task.description}"),
+            console=None,
+            transient=False
+        )
+        
+        # Add worker tasks
+        self.worker_tasks = {}
+        for i in range(num_workers):
+            task_id = self.worker_progress.add_task(f"Worker {i+1}: Idle", total=None)
+            self.worker_tasks[i] = task_id
+    
+    def update_worker(self, worker_id: int, icon: str, message: str):
+        """Update worker status and progress"""
+        with self.lock:
+            self.worker_statuses[worker_id] = f"{icon} {message}"
+            # Update worker progress description with both spinner and task icon
+            if icon in ["🔄", "💰", "📝"]:
+                # Active work - show spinner + task icon
+                display_text = f"{icon} {message}"
+            elif icon == "❌":
+                # Failed - show red text
+                display_text = f"[red]{icon} {message}[/red]"
+            elif icon == "⏳":
+                # Waiting/backoff - show hourglass
+                display_text = f"{icon} {message}"
+            else:
+                # Completed - show checkmark
+                display_text = f"{icon} {message}"
+            
+            self.worker_progress.update(self.worker_tasks[worker_id], description=display_text)
+            # Increment progress for each subtask (3 per model)
+            if icon in ["🔄", "💰", "📝"]:
+                self.completed_subtasks += 1
+                self.progress.update(self.progress_task, completed=self.completed_subtasks)
+    
+    def __rich__(self) -> Any:
+        """Render the complete display"""
+        # Return group with progress bar and worker progress
+        return Group(self.progress, self.worker_progress)
+
 # ---------- main ----------
 
 def main() -> None:
@@ -100,6 +213,7 @@ def main() -> None:
     ap.add_argument("--output", required=True)
     ap.add_argument("--format", choices=["json", "markdown-table"], default="json")
     ap.add_argument("--limit", type=int, help="Limit number of models to process")
+    ap.add_argument("--workers", type=int, default=10, help="Number of worker threads")
     args = ap.parse_args()
 
     console = Console()
@@ -126,45 +240,42 @@ def main() -> None:
     records = []
     
     # Print initial message
-    console.print("Building model catalogue (this may take a moment)...")
+    console.print("Building model catalogue...")
     
-    # Create single overall progress bar that uses full terminal width (starts at left edge)
-    with Progress(
-        BarColumn(bar_width=None, complete_style="white", finished_style="green"),
-        TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
-        TextColumn("({task.completed}/{task.total})"),
-        TimeElapsedColumn(),
-        console=console,
-        transient=True
-    ) as progress:
-        # Add overall progress task
-        overall_task = progress.add_task("", total=len(model_list))
-        
+    # Calculate total subtasks (3 per model)
+    total_subtasks = len(model_list) * 3
+    
+    # Create unified display
+    display = UnifiedDisplay(args.workers, total_subtasks)
+    
+    # Progress callback function for workers
+    def update_progress(worker_id: int, icon: str, message: str):
+        display.update_worker(worker_id, icon, message)
+    
+    # Use Live display for real-time updates
+    with Live(display, refresh_per_second=4, console=console):
+        # Prepare work items
+        work_items = []
         for idx, mid in enumerate(model_list, 1):
-            # Update overall progress 
-            progress.update(overall_task, completed=idx-1)
-            
-            # Process model (no individual progress display)
-            hf = _hf_meta(mid)
-            token_cost = _deepinfra_price(mid)
-            notes = _notes(mid)
-            
-            rec = {
-                "index": idx,
-                "id": mid,
-                "token_cost": token_cost,
-                "capabilities": _caps(hf),
-                "downloads": hf.get("downloads", "—"),
-                "likes": hf.get("likes", "—"),
-                "created": (hf.get("createdAt") or "")[:10],
-                "updated": (hf.get("lastModified") or "")[:10],
-                "license": hf.get("license", "—"),
-                "notes": notes
-            }
-            records.append(rec)
+            worker_id = (idx - 1) % args.workers
+            work_items.append((idx, mid, worker_id, update_progress))
         
-        # Complete overall progress
-        progress.update(overall_task, completed=len(model_list))
+        # Process models in parallel
+        with ThreadPoolExecutor(max_workers=args.workers) as executor:
+            # Submit all tasks
+            future_to_item = {executor.submit(_process_model, item): item for item in work_items}
+            
+            # Process completed tasks
+            for future in as_completed(future_to_item):
+                result = future.result()
+                worker_id = result["worker_id"]
+                
+                # Add record if successful
+                if result["status"] == "✅":
+                    records.append(result["record"])
+    
+    # Sort records by index to maintain order
+    records.sort(key=lambda x: x["index"])
 
     Path(args.output).write_text(json.dumps(records, indent=2))
 

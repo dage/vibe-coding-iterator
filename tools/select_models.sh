@@ -27,7 +27,7 @@ read -rp "Re-select models? (y/N) " yn
 echo
 
 # 2-2  build fresh catalogue (writes JSON & prints markdown table w/ timestamp)
-if ! python3 "$INSPECT_PY" --output "$TMP" --format markdown-table; then
+if ! python3 "$INSPECT_PY" --output "$TMP" --format markdown-table --workers 10; then
     echo "✗ Failed to build model catalogue"
     echo "Please check your DeepInfra setup and network connection"
     exit 1
