@@ -27,25 +27,66 @@ read -rp "Re-select models? (y/N) " yn
 echo
 
 # 2-2  build fresh catalogue (writes JSON & prints markdown table w/ timestamp)
-echo "Building model catalogue (this may take a moment)..."
-python3 "$INSPECT_PY" --output "$TMP" --format markdown-table --limit 20
+if ! python3 "$INSPECT_PY" --output "$TMP" --format markdown-table; then
+    echo "✗ Failed to build model catalogue"
+    echo "Please check your DeepInfra setup and network connection"
+    exit 1
+fi
+
+if [[ ! -f "$TMP" ]] || [[ ! -s "$TMP" ]]; then
+    echo "✗ No model data was generated"
+    exit 1
+fi
 echo
 
 # 2-3  gather user choices by index (comma-separated)
 read -rp "Enter indices for **VISION** models: " vis
 read -rp "Enter indices for **CODE**   models: " cod
 
+# Validate input format
+if [[ ! "$vis" =~ ^[0-9,[:space:]]*$ ]] && [[ -n "$vis" ]]; then
+    echo "✗ Invalid vision models input format. Use comma-separated numbers (e.g., 1,2,3)"
+    exit 1
+fi
+
+if [[ ! "$cod" =~ ^[0-9,[:space:]]*$ ]] && [[ -n "$cod" ]]; then
+    echo "✗ Invalid code models input format. Use comma-separated numbers (e.g., 1,2,3)"
+    exit 1
+fi
+
 # 2-4  rewrite config
 new_created=$(timestamp)
-jq --arg created "$new_created" \
-   --arg vis "$vis" --arg cod "$cod" \
-'def pick($set): 
-  .[] | select((.index|tostring) as $i | $i | IN($set))
-  | {id, token_cost};
-{
+
+# Parse the comma-separated indices into arrays - handle empty inputs
+if [[ -n "$vis" ]]; then
+    vis_indices=$(echo "$vis" | jq -R 'split(",") | map(. | tonumber)')
+else
+    vis_indices="[]"
+fi
+
+if [[ -n "$cod" ]]; then
+    cod_indices=$(echo "$cod" | jq -R 'split(",") | map(. | tonumber)')
+else
+    cod_indices="[]"
+fi
+
+# Generate the config using the parsed indices
+if ! jq --argjson created "\"$new_created\"" \
+       --argjson vis_indices "$vis_indices" \
+       --argjson cod_indices "$cod_indices" \
+'{
   created: $created,
-  vision:  [pick($vis)],
-  code:    [pick($cod)]
-}' "$TMP" > "$CFG"
+  vision_models: [.[] | select(.index as $i | $vis_indices | index($i) != null) | {id, token_cost}],
+  code_models: [.[] | select(.index as $i | $cod_indices | index($i) != null) | {id, token_cost}]
+}' "$TMP" > "$CFG"; then
+    echo "✗ Failed to generate configuration file"
+    exit 1
+fi
+
+# Validate the generated config
+if [[ ! -f "$CFG" ]] || ! jq empty "$CFG" 2>/dev/null; then
+    echo "✗ Generated configuration file is invalid"
+    exit 1
+fi
 
 echo "✓  Updated $CFG" 

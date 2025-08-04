@@ -51,19 +51,16 @@ This document establishes UI standards for the Vibe Coding Iterator project's te
 - **Width**: `width=None` and `bar_width=None` for full width
 - **Task description**: Update dynamically without color markup
 
-#### Multi-Line Progress Animation (Recommended)
-For complex operations with multiple steps, use a 3-line layout:
+#### Simple Full-Width Progress Bar (Recommended)
+For complex operations, use a clean 2-line layout:
 1. **Line 1**: Static message (e.g., "Building model catalogue (this may take a moment)...")
-2. **Line 2**: Overall progress bar with `SpinnerColumn()` + `TextColumn()` + `BarColumn()` + percentage + counts + `TimeElapsedColumn()`
-3. **Line 3**: Individual step progress with `SpinnerColumn()` + `TextColumn()` for current operation
+2. **Line 2**: Full-width progress bar starting from the very left edge of terminal
 
 **Implementation pattern:**
 ```python
 console.print("Building model catalogue (this may take a moment)...")
 
 with Progress(
-    SpinnerColumn(),
-    TextColumn("[progress.description]{task.description}"),
     BarColumn(bar_width=None, complete_style="white", finished_style="green"),
     TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
     TextColumn("({task.completed}/{task.total})"),
@@ -71,21 +68,25 @@ with Progress(
     console=console,
     transient=True
 ) as progress:
-    overall_task = progress.add_task("Building model catalogue", total=total_items)
+    # Empty description for task to start progress bar from left edge
+    overall_task = progress.add_task("", total=total_items)
     
     for idx, item in enumerate(items, 1):
-        progress.update(overall_task, completed=idx-1, description=f"Building model catalogue ({idx}/{total_items})")
+        progress.update(overall_task, completed=idx-1)
         
-        model_task = progress.add_task(f"Processing {item}", total=None)
-        # ... process item ...
-        progress.remove_task(model_task)
+        # Process item without individual progress display
+        # ... do work ...
+        
+    # Complete progress
+    progress.update(overall_task, completed=total_items)
 ```
 
 **Key features:**
-- **Transient display**: `transient=True` for temporary progress
-- **Dynamic updates**: Update task descriptions for each step
-- **Clean transitions**: Remove individual tasks when complete
-- **Visual feedback**: Spinner + progress bar + timing for comprehensive status
+- **Transient display**: `transient=True` for temporary progress that disappears after completion
+- **Full terminal width**: Progress bar starts from very left edge, maximizing visual impact
+- **Clean layout**: No text or spinners competing for horizontal space
+- **Essential info**: Shows percentage, counts, and elapsed time
+- **Simple and effective**: Single progress bar for overall operation status
 
 ### Panels
 - **Border style**: Always use `border_style="white"`

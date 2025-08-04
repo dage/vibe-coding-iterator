@@ -16,7 +16,7 @@ from check_deps import ensure_dependencies
 ensure_dependencies(["rich", "deepctl", "requests"])
 
 from rich.console import Console
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn
+from rich.progress import Progress, BarColumn, TextColumn, TimeElapsedColumn
 from rich.text import Text
 
 _FIELDS = [
@@ -102,21 +102,34 @@ def main() -> None:
     ap.add_argument("--limit", type=int, help="Limit number of models to process")
     args = ap.parse_args()
 
-    model_list = _deepinfra_list()
+    console = Console()
+    
+    try:
+        model_list = _deepinfra_list()
+    except subprocess.CalledProcessError as e:
+        console.print("[red]✗ Failed to list models from DeepInfra[/red]", file=sys.stderr)
+        console.print(f"[red]Error: {e}[/red]", file=sys.stderr)
+        console.print("[dim]Ensure deepctl is installed and your API key is configured[/dim]", file=sys.stderr)
+        sys.exit(1)
+    except Exception as e:
+        console.print("[red]✗ Unexpected error while listing models[/red]", file=sys.stderr)
+        console.print(f"[red]Error: {e}[/red]", file=sys.stderr)
+        sys.exit(1)
+    
+    if not model_list:
+        console.print("[yellow]⚠ No models found[/yellow]", file=sys.stderr)
+        sys.exit(1)
     
     if args.limit:
         model_list = model_list[:args.limit]
     
     records = []
     
-    console = Console()
-    
     # Print initial message
     console.print("Building model catalogue (this may take a moment)...")
     
+    # Create single overall progress bar that uses full terminal width (starts at left edge)
     with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
         BarColumn(bar_width=None, complete_style="white", finished_style="green"),
         TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
         TextColumn("({task.completed}/{task.total})"),
@@ -125,27 +138,16 @@ def main() -> None:
         transient=True
     ) as progress:
         # Add overall progress task
-        overall_task = progress.add_task("Building model catalogue", total=len(model_list))
+        overall_task = progress.add_task("", total=len(model_list))
         
         for idx, mid in enumerate(model_list, 1):
-            # Update overall progress - just show progress without redundant description
+            # Update overall progress 
             progress.update(overall_task, completed=idx-1)
             
-            # Add individual model task
-            model_task = progress.add_task(f"Processing {mid}", total=None)
-            
-            # Update task description for each step
-            progress.update(model_task, description=f"Processing {mid} - Getting HuggingFace metadata...")
+            # Process model (no individual progress display)
             hf = _hf_meta(mid)
-            
-            progress.update(model_task, description=f"Processing {mid} - Getting pricing info...")
             token_cost = _deepinfra_price(mid)
-            
-            progress.update(model_task, description=f"Processing {mid} - Getting notes...")
             notes = _notes(mid)
-            
-            # Remove individual model task when done
-            progress.remove_task(model_task)
             
             rec = {
                 "index": idx,
