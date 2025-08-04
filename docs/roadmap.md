@@ -1,6 +1,7 @@
 # Roadmap
 
 **Current**: Open source models only via DeepInfra
+- Developing setup process including model selection
 
 **Research findings**:
 - Anthropic/Gemini text models: Available on DeepInfra, not HuggingFace registered (breaks capability querying)
