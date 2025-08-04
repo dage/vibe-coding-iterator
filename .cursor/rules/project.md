@@ -12,7 +12,7 @@ Read README.md in each new chat session.
 Use internet search for up-to-date information on all technologies and libraries before coding.
 
 ## Git
-- Never commit to git but allow the human developer to do code review and commit
+- NEVER commit code. You may use git for reading history, status, and staging files with "git add", but NEVER use "git commit" or "git push". Let the user handle all commits.
 - Always write commit headers as feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert [optional-scope]: imperative summary per Conventional Commits 1.0.0; keep header ≤50 chars, body optional, add ! + BREAKING CHANGE: footer for API breaks, one logical change per commit
 - When asked to suggest commit messages or when useful, use git commands to review changes and suggest appropriate commit messages following the above format
 
