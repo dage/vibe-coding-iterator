@@ -50,7 +50,9 @@ echo
 get_model_details() {
     local index=$1
     echo >&2
-    echo "Getting detailed information for model #$index..." >&2
+    # Get model name from the JSON data
+    local model_name=$(jq -r ".[$((index-1))].id" "$TMP" 2>/dev/null || echo "unknown")
+    echo "Getting detailed information for model #$index: $model_name..." >&2
     python3 "$INSPECT_PY" --output "$TMP" --query "?$index" >&2
     echo >&2
 }
