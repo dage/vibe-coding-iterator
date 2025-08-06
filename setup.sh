@@ -48,10 +48,10 @@ echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo "Running model selection tool..."
     python3 src/check_deps.py  # Ensure dependencies are available
-    ./tools/select_models.sh
+    ./tools/select-models.sh
     echo "✓ Model configuration completed"
 else
-    echo "You can configure models later by running: ./tools/select_models.sh"
+    echo "You can configure models later by running: ./tools/select-models.sh"
 fi
 
 echo

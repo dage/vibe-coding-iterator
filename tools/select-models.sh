@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# tools/select_models.sh
+# tools/select-models.sh
 
 set -euo pipefail
 

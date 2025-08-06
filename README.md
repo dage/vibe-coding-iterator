@@ -46,7 +46,7 @@ vibe-coding-iterator/
 ├── requirements.txt
 ├── tools/                   # Utility scripts for manual tasks
 │   ├── deepctl-setup.sh     # deepctl installation and version checking utilities (Mac only)
-│   └── select_models.sh     # Model selection and configuration tool
+│   └── select-models.sh     # Model selection and configuration tool
 ├── docs/                    # Project documentation
 │   ├── roadmap.md           # Development roadmap and limitations
 │   └── ui-guidelines.md     # Terminal UI standards for Rich library usage
@@ -118,7 +118,7 @@ The system can resume autonomous iteration after manual interventions and git co
 The `tools/` directory contains utility scripts for manual tasks:
 
 - **`deepctl-setup.sh`**: Install and configure deepctl CLI tool for DeepInfra (Mac only)
-- **`select_models.sh`**: Interactive model selection tool for configuring vision and code generation models.
+- **`select-models.sh`**: Interactive model selection tool for configuring vision and code generation models.
 
 ## Configuration
 
@@ -127,7 +127,7 @@ The `tools/` directory contains utility scripts for manual tasks:
 Model configuration is stored in `config/models.json` with model IDs and token costs. The setup script will prompt for model selection, or run manually:
 
 ```bash
-./tools/select_models.sh
+./tools/select-models.sh
 ```
 
 ### Environment Variables
