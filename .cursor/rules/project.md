@@ -5,16 +5,23 @@ description: Core project rules for Vibe Coding Iterator development
 
 # Vibe Coding Iterator - Core Development Rules
 
-## First Action
-Read README.md in each new chat session.
+## Agent Interaction
+- Always provide independent analysis and constructive critique, avoiding flattery and uncritical agreement.
+- Provide minimal, specific solutions that address only the exact request rather than adding comprehensive boilerplate or "standard" patterns that aren't actually needed in the project.
+- Make incremental changes that improve the codebase step-by-step. Before adding any new abstraction, mechanism, or complexity, ensure the current implementation works and ask yourself: "Is this change absolutely necessary to fulfill the user's request?" If not, stop.
+
+## Session Start
+- Read README.md in each new chat session.
 
 ## Knowledge Updates
-Use internet search for up-to-date information on all technologies and libraries before coding.
+- Use internet search for up-to-date information on all technologies and libraries before coding.
 
 ## Git
-- NEVER commit code. You may use git for reading history, status, and staging files with "git add", but NEVER use "git commit" or "git push". Let the user handle all commits.
-- Always write commit headers as feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert [optional-scope]: imperative summary per Conventional Commits 1.0.0; keep header ≤50 chars, body optional, add ! + BREAKING CHANGE: footer for API breaks, one logical change per commit
-- When asked to suggest commit messages or when useful, use git commands to review changes and suggest appropriate commit messages following the above format
+- NEVER use destructive git commands, including but not limited to `commit`, `push`, `reset`, `rebase`, `merge`, or `checkout` with file changes. All commits and history-altering operations must be handled by the user.
+- You are encouraged to use read-only git commands freely to understand the repository, such as `log`, `status`, `diff`, `show`, and `blame`. You may also stage files using `git add`.
+- After completing a task that results in file changes, proactively suggest a commit message that follows the project's conventions.
+- Before formatting a commit message, inspect the last 10 commits (`git log -10`) to ensure the style (e.g. use of scope, tense, body formatting) is consistent with the project's history.
+- Always write commit headers as feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert: imperative summary per Conventional Commits 1.0.0; keep header ≤50 chars, body optional, add ! + BREAKING CHANGE: footer for API breaks, one logical change per commit.
 
 ## Files and Dependencies
 - Never delete files outside project directory
@@ -22,7 +29,6 @@ Use internet search for up-to-date information on all technologies and libraries
 - Ask permission before installing 3rd party software (pip packages are auto-approved)
 
 ## Code Standards
-- Every script and python file should have a comment with the relative path and filename on the first line.
 - Type hints on all functions
 - Environment variables for configuration (VIBES_ prefix, uppercase)
 - Simple function signatures - no parameter passing of config
@@ -48,12 +54,12 @@ Use internet search for up-to-date information on all technologies and libraries
 - Response validation before processing
 
 ## Autonomous Loop Structure
-1. Generate/modify code via DeepInfra models
-2. Render and screenshot with Playwright
-3. Analyze with vision models
-4. Process feedback to instructions
-5. Apply via Aider non-interactively
-6. Continue or await intervention
+1.  Generate/modify code via DeepInfra models
+2.  Render and screenshot with Playwright
+3.  Analyze with vision models
+4.  Process feedback to instructions
+5.  Apply via Aider non-interactively
+6.  Continue or await intervention
 
 ## State Continuity
-Always pull from git after a human has done manual intervention to get the most up-to-date version of the project files.
+- Always pull from git after a human has done manual intervention to get the most up-to-date version of the project files.

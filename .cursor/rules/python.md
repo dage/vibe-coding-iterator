@@ -7,6 +7,7 @@ description: Python development patterns and coding standards
 # Python Development Rules
 
 ## Code Patterns
+- First line: relative file path and filename comment
 - Strive for self contained python modules that have no or minim side effects.
 - Any side effects should be documented in the file header comments
 - All model queries (vision and code generation) handled by src/model_client.py
