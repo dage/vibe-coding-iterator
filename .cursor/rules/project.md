@@ -6,7 +6,7 @@ description: Core project rules for Vibe Coding Iterator development
 # Vibe Coding Iterator - Core Development Rules
 
 ## First Action
-Read README.md in each new chat session.
+At the start of each new chat session or each fresh context, immediately read the README.md file to understand the project before responding to any user queries.
 
 ## Knowledge Updates
 Use internet search for up-to-date information on all technologies and libraries before coding.
