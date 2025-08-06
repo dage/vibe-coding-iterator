@@ -21,8 +21,8 @@ The system can run autonomously for extended periods while allowing developer in
 
 This project prioritizes **simplicity and modularity** to maximize focus on AI model optimization and workflow experimentation rather than complex codebase maintenance:
 
-- **No file logging**: Uses stdout only for all logging and output
-- **Project isolation**: Each vibe project requires a fresh clone and setup - no cleanup functionality needed
+- **Slack product requirements**: Omits code for cleanup, file logging, and similar production concerns
+- **Terminal-only interface**: Simple text-based UI without keyboard navigation or mouse/pointer support
 - **Simple function signatures**: Model identifiers and configuration stored as environment variables, not passed as function parameters
 - **Environment variable prefixing**: All variables prefixed with `VIBES_` to avoid conflicts (e.g., `VIBES_API_KEY`)
 - **Project-specific conda environments**: Each project gets its own conda environment matching the sanitized project name
@@ -118,7 +118,7 @@ The system can resume autonomous iteration after manual interventions and git co
 The `tools/` directory contains utility scripts for manual tasks:
 
 - **`deepctl-setup.sh`**: Install and configure deepctl CLI tool for DeepInfra (Mac only)
-- **`select-models.sh`**: Interactive model selection tool for configuring vision and code generation models.
+- **`select-models.sh`**: Interactive model selection tool for configuring vision and code generation models. Consolidates DeepInfra information and HuggingFace model cards.
 
 ## Configuration
 
@@ -140,4 +140,4 @@ Key environment variables (among others in the configuration):
 
 ## Disclaimer
 
-This project is not affiliated with DeepInfra. DeepInfra was chosen partly because the developer had some unused API credits there and partly because it quickly makes newly released open-source models available and offers a strong selection of models.
+This project is not affiliated with DeepInfra. DeepInfra was chosen partly because the developer had some unused API credits there and partly because it had some interesting open models made available. It might be replaced by OpenRouter in the near future.
