@@ -44,9 +44,9 @@ vibe-coding-iterator/
 ├── README.md
 ├── setup.sh                 # Main setup script
 ├── requirements.txt
-├── tools/                   # Utility scripts for manual tasks (e.g., listing DeepInfra models)
+├── tools/                   # Utility scripts for manual tasks
 │   ├── deepctl-setup.sh     # deepctl installation and version checking utilities (Mac only)
-│   └── list_models.sh       # List and analyze DeepInfra models with HuggingFace metadata
+│   └── select-models.sh     # Model selection and configuration tool
 ├── docs/                    # Project documentation
 │   ├── roadmap.md           # Development roadmap and limitations
 │   └── ui-guidelines.md     # Terminal UI standards for Rich library usage
@@ -118,9 +118,19 @@ The system can resume autonomous iteration after manual interventions and git co
 The `tools/` directory contains utility scripts for manual tasks:
 
 - **`deepctl-setup.sh`**: Install and configure deepctl CLI tool for DeepInfra (Mac only)
-- **`list_models.sh`**: List DeepInfra models generation models with HuggingFace metadata, popularity metrics, and relevant tags. Proprietary models (Gemini/Anthropic) are greyed out per the roadmap.
+- **`select-models.sh`**: Interactive model selection tool for configuring vision and code generation models.
 
 ## Configuration
+
+### Model Configuration
+
+Model configuration is stored in `config/models.json` with model IDs and token costs. The setup script will prompt for model selection, or run manually:
+
+```bash
+./tools/select-models.sh
+```
+
+### Environment Variables
 
 Key environment variables (among others in the configuration):
 - `VIBES_API_KEY` - DeepInfra API key

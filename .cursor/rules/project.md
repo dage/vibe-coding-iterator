@@ -10,8 +10,8 @@ description: Core project rules for Vibe Coding Iterator development
 - Provide minimal, specific solutions that address only the exact request rather than adding comprehensive boilerplate or "standard" patterns that aren't actually needed in the project.
 - Make incremental changes that improve the codebase step-by-step. Before adding any new abstraction, mechanism, or complexity, ensure the current implementation works and ask yourself: "Is this change absolutely necessary to fulfill the user's request?" If not, stop.
 
-## Session Start
-- Read README.md in each new chat session.
+## First Action
+- At the start of each new chat session or each fresh context, immediately read the README.md file to understand the project before responding to any user queries.
 
 ## Knowledge Updates
 - Use internet search for up-to-date information on all technologies and libraries before coding.
@@ -39,6 +39,10 @@ description: Core project rules for Vibe Coding Iterator development
 - Never create UI that uses keyboard controls like arrow keys.
 - Self-documenting code with minimal comments
 - When developing new features, always try to find a way to test it and verify the result before starting implementation, by making a test script or similar, then implement it while iterating on the test
+
+## File Naming Conventions
+- .py files: use underscores (snake_case)
+- .sh, .md, .json files: use hyphens (kebab-case)
 
 ## Architecture Requirements
 - Core API modules shared between evals and iteration system

@@ -12,6 +12,7 @@ description: Shell script development patterns and standards
 - Use conda activate for environment switching
 - Provide clear progress feedback
 - Handle essential error cases
+- Use hyphens (kebab-case) for .sh filenames
 
 ## Setup Scripts
 - Prompt for sanitized project name

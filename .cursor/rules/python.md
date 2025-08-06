@@ -14,6 +14,8 @@ description: Python development patterns and coding standards
 - src/model_client.py loads model config from config folder on initialization
 - Load VIBES_ environment variables at startup
 - Handle API failures gracefully with fallbacks
+- Run dependency checks at script startup: `from check_deps import ensure_dependencies; ensure_dependencies()`
+- Use underscores (snake_case) for .py filenames
 
 ## Evaluation Scripts
 - Standalone execution with clear pass/fail indicators

@@ -40,8 +40,24 @@ else
 fi
 
 echo
+echo "=== Model Configuration ==="
+echo "You can now configure your preferred models for vision and code generation."
+read -p "Would you like to configure models now? (y/N): " -n 1 -r
+echo
+
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    echo "Running model selection tool..."
+    python3 src/check_deps.py  # Ensure dependencies are available
+    ./tools/select-models.sh
+    echo "✓ Model configuration completed"
+else
+    echo "You can configure models later by running: ./tools/select-models.sh"
+fi
+
+echo
 echo "=== Setup Complete ==="
 echo "✓ deepctl is ready to use"
+echo "✓ Model configuration system is available"
 echo
 echo "Next steps will include:"
 echo "- Creating conda environment"
