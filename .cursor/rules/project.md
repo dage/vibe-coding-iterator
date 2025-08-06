@@ -16,6 +16,9 @@ description: Core project rules for Vibe Coding Iterator development
 ## Knowledge Updates
 - Use internet search for up-to-date information on all technologies and libraries before coding.
 
+## Verification Requests
+- When asked to "double check" something, verify the statement using alternative sources of truth (web search, terminal commands, documentation) and actively look for contradictory evidence that could disprove the claim.
+
 ## Git
 - NEVER use destructive git commands, including but not limited to `commit`, `push`, `reset`, `rebase`, `merge`, or `checkout` with file changes. All commits and history-altering operations must be handled by the user.
 - You are encouraged to use read-only git commands freely to understand the repository, such as `log`, `status`, `diff`, `show`, and `blame`. You may also stage files using `git add`.
