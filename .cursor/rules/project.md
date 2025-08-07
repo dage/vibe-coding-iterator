@@ -25,6 +25,8 @@ description: Core project rules for Vibe Coding Iterator development
 - After completing a task that results in file changes, proactively suggest a commit message that follows the project's conventions.
 - Before formatting a commit message, inspect the last 10 commits (`git log -10`) to ensure the style (e.g. use of scope, tense, body formatting) is consistent with the project's history.
 - Always write commit headers as feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert: imperative summary per Conventional Commits 1.0.0; keep header ≤50 chars, body optional, add ! + BREAKING CHANGE: footer for API breaks, one logical change per commit.
+- When outputting commit messages in chat, wrap the entire message in a fenced code block using ```python to preserve indentation and line breaks for copy-paste.
+- When amending, prefer a single combined, concise body that merges prior and new changes; avoid overly verbose bullet lists.
 
 ## Files and Dependencies
 - Never delete files outside project directory
@@ -49,19 +51,19 @@ description: Core project rules for Vibe Coding Iterator development
 
 ## Architecture Requirements
 - Core API modules shared between evals and iteration system
-- Single HTTP client in src/deepinfra_client.py
+- Single HTTP client for OpenRouter API
 - Rate limiting with exponential backoff
 - Comprehensive error handling
 - Project-specific conda environment (sanitized project name)
 
-## DeepInfra Integration
-- Single model provider only
-- All API calls through src/deepinfra_client.py
-- Token usage and cost tracking
+## OpenRouter Integration
+- Single model provider API for access to multiple models
+- Environment variables for API key and model configuration
+- Simple model selection via VIBES_VISION_MODEL and VIBES_CODE_MODEL
 - Response validation before processing
 
 ## Autonomous Loop Structure
-1.  Generate/modify code via DeepInfra models
+1.  Generate/modify code via OpenRouter models
 2.  Render and screenshot with Playwright
 3.  Analyze with vision models
 4.  Process feedback to instructions

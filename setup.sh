@@ -1,13 +1,12 @@
 #!/bin/bash
-# setup.sh - Setup script for vibe-coding-iterator
+# setup.sh
 
 set -e
 
 # Get script directory for reliable path handling
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Source the deepctl setup functions
-source "$SCRIPT_DIR/tools/deepctl-setup.sh"
+
 
 echo "=== Vibe Coding Iterator Setup ==="
 echo
@@ -88,8 +87,7 @@ if [[ "$sanitized_name" != "$project_name" ]]; then
     echo "Project name sanitized: '$project_name' → '$sanitized_name'"
 fi
 
-echo "Using conda environment name: $sanitized_name"
-echo
+
 
 # Check if conda is available
 if ! command -v conda >/dev/null 2>&1; then
@@ -129,63 +127,209 @@ fi
 echo
 echo "=== Activating Conda Environment ==="
 eval "$(conda shell.bash hook)"
+if [[ -n "$CONDA_DEFAULT_ENV" && "$CONDA_DEFAULT_ENV" != "$sanitized_name" ]]; then
+    conda deactivate || true
+fi
 conda activate "$sanitized_name"
 echo "✓ Conda environment '$sanitized_name' is now active"
 
-# Check deepctl availability
+# Setup OpenRouter configuration
 echo
-echo "=== DeepInfra Setup ==="
-if check_deepctl; then
-    echo
-    echo "✓ deepctl is already installed and available"
-else
-    echo
-    echo "deepctl is required for this project to interact with DeepInfra models."
-    read -p "Would you like to install deepctl automatically? (y/N): " -n 1 -r
-    echo
-    
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        if install_deepctl; then
-            echo "✓ deepctl setup completed successfully"
+echo "=== OpenRouter Configuration ==="
+echo "This project uses OpenRouter API for AI model access."
+echo
+
+# Check if .env file exists and validate required variables
+ENV_FILE="$SCRIPT_DIR/.env"
+CONFIGURE_OPENROUTER=false
+
+if [[ -f "$ENV_FILE" ]]; then
+    echo "✓ Found existing .env file"
+
+    # Ask whether to reuse or create new
+    while true; do
+        read -p "Reuse existing .env? (y/N): " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            REUSE_ENV=true
+            break
+        elif [[ $REPLY =~ ^[Nn]$ || -z "$REPLY" ]]; then
+            REUSE_ENV=false
+            break
         else
-            echo "✗ Failed to install deepctl"
-            echo "Please install manually: curl https://deepinfra.com/get.sh | sh"
-            echo "Or visit: https://github.com/deepinfra/deepctl"
-            exit 1
+            echo "Please answer y or n."
+        fi
+    done
+
+    if [[ "$REUSE_ENV" == true ]]; then
+        # Check if all required environment variables are defined
+        MISSING_VARS=()
+        if ! grep -q "^VIBES_API_KEY=" "$ENV_FILE"; then
+            MISSING_VARS+=("VIBES_API_KEY")
+        fi
+        if ! grep -q "^VIBES_VISION_MODEL=" "$ENV_FILE"; then
+            MISSING_VARS+=("VIBES_VISION_MODEL")
+        fi
+        if ! grep -q "^VIBES_CODE_MODEL=" "$ENV_FILE"; then
+            MISSING_VARS+=("VIBES_CODE_MODEL")
+        fi
+
+        if [[ ${#MISSING_VARS[@]} -eq 0 ]]; then
+            echo "✓ All required environment variables are configured"
+            echo "Current OpenRouter configuration:"
+            echo "  API Key: $(grep "^VIBES_API_KEY=" "$ENV_FILE" | cut -d'=' -f2 | sed 's/.*/***/g')"
+            echo "  Vision Model: $(grep "^VIBES_VISION_MODEL=" "$ENV_FILE" | cut -d'=' -f2)"
+            echo "  Code Model: $(grep "^VIBES_CODE_MODEL=" "$ENV_FILE" | cut -d'=' -f2)"
+            echo "Configuration looks complete."
+            # Ensure VIBES_APP_NAME is present and up to date with sanitized project name
+            if grep -q "^VIBES_APP_NAME=" "$ENV_FILE"; then
+                tmpfile=$(mktemp)
+                sed "s/^VIBES_APP_NAME=.*/VIBES_APP_NAME=$sanitized_name/" "$ENV_FILE" > "$tmpfile" && mv "$tmpfile" "$ENV_FILE"
+            else
+                echo "VIBES_APP_NAME=$sanitized_name" >> "$ENV_FILE"
+            fi
+        else
+            echo "⚠ Missing required environment variables: ${MISSING_VARS[*]}"
+            echo "The .env file needs to be recreated to include all required variables."
+            read -p "Recreate .env file? (y/N): " -n 1 -r
+            echo
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                CONFIGURE_OPENROUTER=true
+            else
+                echo "✗ Cannot continue without complete OpenRouter configuration"
+                exit 1
+            fi
         fi
     else
-        echo "Setup cannot continue without deepctl."
-        echo "To install manually: curl https://deepinfra.com/get.sh | sh"
-        echo "Then run ./setup.sh again"
-        exit 1
+        echo "Will create a new .env"
+        CONFIGURE_OPENROUTER=true
     fi
-fi
-
-echo
-echo "=== Model Configuration ==="
-echo "You can now configure your preferred models for vision and code generation."
-read -p "Would you like to configure models now? (y/N): " -n 1 -r
-echo
-
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo "Running model selection tool..."
-    python3 src/check_deps.py  # Ensure dependencies are available
-    ./tools/select-models.sh
-    echo "✓ Model configuration completed"
 else
-    echo "You can configure models later by running: ./tools/select-models.sh"
+    echo "No .env found yet — let's configure OpenRouter now."
+    CONFIGURE_OPENROUTER=true
 fi
+
+if [[ "$CONFIGURE_OPENROUTER" == true ]]; then
+    # Suggested default models (open source, low cost, solid capabilities)
+    DEFAULT_VISION_MODEL="meta-llama/llama-3.2-90b-vision-instruct"
+    DEFAULT_CODE_MODEL="z-ai/glm-4.5-air"
+    echo "Enter your OpenRouter API key:"
+    echo "(Get one from: https://openrouter.ai/settings/keys)"
+    echo "Note: input is hidden for security; type and press Enter."
+    # Validate API key immediately; re-prompt until it passes
+    BASE_URL_VALIDATE="https://openrouter.ai/api/v1"
+    while true; do
+        read -p "API Key: " -s api_key
+        echo
+        if [[ -z "$api_key" ]]; then
+            echo "✗ API key cannot be empty"
+            continue
+        fi
+        code=$(curl -sS -o /dev/null -w "%{http_code}" -H "Authorization: Bearer $api_key" "$BASE_URL_VALIDATE/models")
+        if [[ "$code" == "200" ]]; then
+            echo "✓ API key accepted"
+            break
+        else
+            echo "✗ API key was not accepted (HTTP $code). Please try again."
+        fi
+    done
+    
+    echo "Enter the OpenRouter model slug for vision tasks:"
+    echo "(Default: $DEFAULT_VISION_MODEL)"
+    read -p "Vision Model [$DEFAULT_VISION_MODEL]: " vision_model
+    vision_model=${vision_model:-$DEFAULT_VISION_MODEL}
+    
+    echo "Enter the OpenRouter model slug for code generation:"
+    echo "(Default: $DEFAULT_CODE_MODEL)"
+    read -p "Code Model [$DEFAULT_CODE_MODEL]: " code_model
+    code_model=${code_model:-$DEFAULT_CODE_MODEL}
+    
+    # Create or update .env file
+    {
+        echo "# Vibe Coding Iterator - OpenRouter Configuration"
+        echo "# Generated on $(date)"
+        echo ""
+        echo "# OpenRouter base URL"
+        echo "OPENROUTER_BASE_URL=https://openrouter.ai/api/v1"
+        echo ""
+        echo "# OpenRouter API key - get from https://openrouter.ai/settings/keys"
+        echo "VIBES_API_KEY=$api_key"
+        echo ""
+        echo "# Vision model for screenshot analysis"
+        echo "VIBES_VISION_MODEL=$vision_model"
+        echo ""
+        echo "# Code generation model"
+        echo "VIBES_CODE_MODEL=$code_model"
+        echo ""
+        echo "# App name used for attribution headers (required)"
+        echo "VIBES_APP_NAME=$sanitized_name"
+    } > "$ENV_FILE"
+    
+    echo "✓ OpenRouter configuration saved to .env"
+fi
+
+
 
 echo
 echo "=== Setup Complete ==="
 echo "✓ Conda environment '$sanitized_name' is active"
 echo "✓ Python dependencies are installed"
-echo "✓ deepctl is ready to use"
-echo "✓ Model configuration system is available"
+echo "✓ OpenRouter API configuration is ready"
 echo
-echo "Next steps:"
-echo "- Set up DeepInfra API key"
-echo "- Run initial tests"
+echo "Your environment variables:"
+echo "- VIBES_API_KEY: Configured"
+if [[ -f "$ENV_FILE" ]]; then
+    echo "- VIBES_VISION_MODEL: $(grep "VIBES_VISION_MODEL=" "$ENV_FILE" | cut -d'=' -f2)"
+    echo "- VIBES_CODE_MODEL: $(grep "VIBES_CODE_MODEL=" "$ENV_FILE" | cut -d'=' -f2)"
+    echo "- VIBES_APP_NAME: $(grep "^VIBES_APP_NAME=" "$ENV_FILE" | cut -d'=' -f2)"
+else
+    echo "- VIBES_VISION_MODEL: (not configured)"
+    echo "- VIBES_CODE_MODEL: (not configured)"
+    echo "- VIBES_APP_NAME: $sanitized_name"
+fi
 echo
-echo "To activate this environment in future sessions:"
-echo "  conda activate $sanitized_name"
+echo "=== Integration Test ==="
+# Validate OpenRouter API access without consuming credits by listing models
+OR_BASE_URL="${OPENROUTER_BASE_URL:-https://openrouter.ai/api/v1}"
+OR_API_KEY="$(grep '^VIBES_API_KEY=' "$ENV_FILE" | cut -d'=' -f2)"
+
+if curl -sSf -H "Authorization: Bearer $OR_API_KEY" "$OR_BASE_URL/models" >/dev/null; then
+  echo "✓ OpenRouter API reachable and API key accepted"
+else
+  echo "✗ Integration test failed: models endpoint unreachable or API key rejected"
+  echo "  - Verify internet connectivity"
+  echo "  - Check VIBES_API_KEY in .env and optional OPENROUTER_BASE_URL"
+  exit 1
+fi
+
+# Query API key details
+KEY_URL="$OR_BASE_URL/key"
+tmp_json=$(mktemp)
+http_code=$(curl -sS -o "$tmp_json" -w "%{http_code}" -H "Authorization: Bearer $OR_API_KEY" "$KEY_URL")
+
+if [[ "$http_code" == "200" ]]; then
+  echo "✓ API key details (HTTP 200):"
+  python - <<'PY'
+import json, sys
+path = sys.argv[1]
+data = json.load(open(path))
+info = data.get("data", {})
+label = info.get("label")
+limit = info.get("limit")
+usage = info.get("usage")
+remain = info.get("limit_remaining")
+free = info.get("is_free_tier")
+prov = info.get("is_provisioning_key")
+print(f"  - label: {label}")
+print(f"  - limit: {limit}")
+print(f"  - usage: {usage}")
+print(f"  - limit_remaining: {remain}")
+print(f"  - is_free_tier: {free}")
+print(f"  - is_provisioning_key: {prov}")
+PY
+  "$tmp_json"
+else
+  echo "✗ API key check failed (HTTP $http_code). Response body:" 
+  cat "$tmp_json"
+fi
+rm -f "$tmp_json"

@@ -1,10 +1,12 @@
-# requirements.txt - Python dependencies for Vibe Coding Iterator
+# requirements.txt
 
-# Core dependencies
+# Core dependencies (minimally pinned)
 requests>=2.32.4
 rich>=14.1.0
+openai>=1.0.0
+pydantic==2.11.7
 
 # Future dependencies (commented out until needed)
 # playwright>=1.40.0
 # aider>=0.25.0
-# openai>=1.0.0 
+# playwright>=1.40.0

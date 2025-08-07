@@ -1,6 +1,6 @@
 ---
 type: Auto Attached
-globs: ["*.sh", "tools/*.sh"]
+globs: ["*.sh"]
 description: Shell script development patterns and standards
 ---
 
@@ -17,8 +17,8 @@ description: Shell script development patterns and standards
 ## Setup Scripts
 - Prompt for sanitized project name
 - Create project-specific conda environment
-- Configure VIBES_ environment variables
-- Test complete pipeline functionality
+- Configure VIBES_ environment variables for OpenRouter
+- Validate .env file completeness
 
 ## Utility Scripts
 - Manual execution for common maintenance tasks
