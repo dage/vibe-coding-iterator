@@ -39,7 +39,7 @@ vibe-coding-iterator/
 │       ├── project.mdc
 │       ├── python.mdc
 │       └── shell.mdc
-├── .env                     # Environment variables (created by setup.sh)
+├── .env                     # Environment variables (created by future setup steps)
 ├── .gitignore
 ├── README.md
 ├── setup.sh                 # Main setup script
@@ -75,13 +75,7 @@ cd vibe-coding-iterator
 ./setup.sh
 ```
 
-The setup script will:
-1. Prompt for your vibe project name (which will be sanitized for directory and conda environment naming)
-2. Create a project-specific conda environment with the sanitized name
-3. Prompt user for DeepInfra API key
-4. Create a default .env with API key and other configuration
-5. Test DeepInfra model connectivity
-7. Generate test files and execute a full iteration loop to ensure everything is working.
+The setup script handles environment setup including project name input, conda environment creation, dependency installation, API key configuration, and optional model configuration. It performs integration tests to verify everything works before you start vibe coding.
 
 
 ## Architecture
