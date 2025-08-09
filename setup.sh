@@ -309,7 +309,7 @@ http_code=$(curl -sS -o "$tmp_json" -w "%{http_code}" -H "Authorization: Bearer 
 
 if [[ "$http_code" == "200" ]]; then
   echo "✓ API key details (HTTP 200):"
-  python - <<'PY'
+  python - "$tmp_json" <<'PY'
 import json, sys
 path = sys.argv[1]
 data = json.load(open(path))
@@ -327,7 +327,6 @@ print(f"  - limit_remaining: {remain}")
 print(f"  - is_free_tier: {free}")
 print(f"  - is_provisioning_key: {prov}")
 PY
-  "$tmp_json"
 else
   echo "✗ API key check failed (HTTP $http_code). Response body:" 
   cat "$tmp_json"

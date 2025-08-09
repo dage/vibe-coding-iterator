@@ -116,8 +116,8 @@ Model configuration is stored in environment variables in the `.env` file. The s
 
 Key environment variables (set in `.env` file):
 - `VIBES_API_KEY` - OpenRouter API key (get from https://openrouter.ai/settings/keys)
-- `VIBES_VISION_MODEL` - Vision model slug (e.g., anthropic/claude-3-haiku, openai/gpt-4o-mini)
-- `VIBES_CODE_MODEL` - Code generation model slug (e.g., anthropic/claude-3-sonnet, meta-llama/llama-3.1-8b-instruct)
+- `VIBES_VISION_MODEL` - Vision model slug (e.g., meta-llama/llama-3.2-90b-vision-instruct)
+- `VIBES_CODE_MODEL` - Code generation model slug (e.g., z-ai/glm-4.5-air, meta-llama/llama-3.1-8b-instruct)
 - `VIBES_APP_NAME` - Sanitized project name for attribution headers in OpenRouter (required)
 
 Optional environment variables:

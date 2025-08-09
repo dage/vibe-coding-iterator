@@ -9,8 +9,8 @@ Tiny OpenRouter client + stateful Conversation.
 
 Env (per README/setup.sh):
   VIBES_API_KEY        - required
-  VIBES_CODE_MODEL     - default code model slug (e.g., openai/gpt-4o-mini)
-  VIBES_VISION_MODEL   - default vision model slug
+  VIBES_CODE_MODEL     - required default code model slug
+  VIBES_VISION_MODEL   - required default vision model slug
   VIBES_APP_NAME       - required; used for attribution headers (X-Title) and a simple Referer
 
 Docs: OpenRouter is OpenAI-compatible; images accept base64 data URLs; attribution headers required.
@@ -22,7 +22,8 @@ from typing import Any, Dict, List, Optional, Union
 from pathlib import Path
 import base64, mimetypes, asyncio, random, os, re
 
-from pydantic import BaseSettings, Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field, ValidationError
 from openai import (
     AsyncOpenAI,
     APIStatusError,
@@ -37,20 +38,28 @@ TIMEOUT_SECONDS: float = 120.0
 
 
 class _Settings(BaseSettings):
-    api_key: str = Field(..., env="VIBES_API_KEY")
-    base_url: str = Field("https://openrouter.ai/api/v1", env="OPENROUTER_BASE_URL")
+    # Use VIBES_ prefix for most fields; ignore unrelated env keys
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        env_prefix="VIBES_",
+        extra="ignore",
+    )
 
-    # Defaults so callers can omit `model=...`
-    code_model: str  = Field("openai/gpt-4o-mini", env="VIBES_CODE_MODEL")
-    vision_model: str = Field("openai/gpt-4o-mini", env="VIBES_VISION_MODEL")
+    # Required
+    api_key: str
+    app_name: str
 
-    # Required attribution
-    app_name: str = Field(..., env="VIBES_APP_NAME")
+    # Required model slugs; no built-in defaults to enforce .env configuration
+    code_model: str
+    vision_model: str
 
-
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
+    # Not using VIBES_ prefix; map to OPENROUTER_BASE_URL if provided
+    base_url: str = Field(
+        default="https://openrouter.ai/api/v1",
+        validation_alias="OPENROUTER_BASE_URL",
+    )
+    
 
 
 def _slug(s: str) -> str:
@@ -59,7 +68,30 @@ def _slug(s: str) -> str:
 
 @lru_cache
 def _settings() -> _Settings:
-    return _Settings()  # parsed once per process
+    try:
+        return _Settings()  # parsed once per process
+    except ValidationError as e:
+        # Surface a clear message about required env vars
+        missing_fields = []
+        for err in e.errors():
+            if err.get("type") == "missing":
+                loc = err.get("loc") or []
+                if loc:
+                    missing_fields.append(str(loc[-1]))
+        # Map field names to expected env vars (with prefix)
+        field_to_env = {
+            "api_key": "VIBES_API_KEY",
+            "app_name": "VIBES_APP_NAME",
+            "code_model": "VIBES_CODE_MODEL",
+            "vision_model": "VIBES_VISION_MODEL",
+        }
+        missing_env = [field_to_env.get(f, f) for f in missing_fields]
+        msg = (
+            "Missing required environment variables: "
+            + ", ".join(missing_env or ["(unknown)"])
+            + ". Configure them in .env as documented in setup.sh."
+        )
+        raise RuntimeError(msg) from e
 
 
 @lru_cache
@@ -157,7 +189,22 @@ async def chat(
         )
 
     res = await _retry(call)
-    return res.choices[0].message.content or ""
+    # Minimal extraction following OpenAI-compatible shape
+    try:
+        content = res.choices[0].message.content
+    except Exception:
+        return ""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        texts: List[str] = []
+        for part in content:
+            if isinstance(part, dict):
+                t = part.get("text")
+                if isinstance(t, str):
+                    texts.append(t)
+        return "\n".join(t for t in texts if t)
+    return str(content or "")
 
 
 async def vision_single(
