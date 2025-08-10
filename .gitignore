@@ -2,3 +2,6 @@
 .DS_Store
 .env
 src/__pycache__/
+
+# runtime artifacts
+storage/
