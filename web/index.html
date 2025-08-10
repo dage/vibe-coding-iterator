@@ -1,0 +1,15 @@
+<!doctype html>
+<meta charset="utf-8"/>
+<title>Vibe Coding Iterator — API check</title>
+<body>
+  <h1>API alive</h1>
+  <pre id="log"></pre>
+  <script>
+    const log = document.getElementById('log');
+    const es = new EventSource('/api/events');
+    es.onmessage = (e) => { log.textContent += e.data + '\n'; };
+    fetch('/api/control', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({action:'pause'})});
+  </script>
+</body>
+
+

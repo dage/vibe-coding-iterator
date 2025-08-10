@@ -1,0 +1,102 @@
+{
+  "oneOf": [
+    {
+      "properties": {
+        "action": {
+          "enum": [
+            "pause",
+            "resume"
+          ],
+          "title": "Action",
+          "type": "string"
+        }
+      },
+      "required": [
+        "action"
+      ],
+      "title": "ControlCommand",
+      "type": "object"
+    },
+    {
+      "$defs": {
+        "ContentImage": {
+          "properties": {
+            "type": {
+              "const": "image_url",
+              "title": "Type",
+              "type": "string"
+            },
+            "image_url": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "title": "Image Url",
+              "type": "object"
+            }
+          },
+          "required": [
+            "type",
+            "image_url"
+          ],
+          "title": "ContentImage",
+          "type": "object"
+        },
+        "ContentText": {
+          "properties": {
+            "type": {
+              "const": "text",
+              "title": "Type",
+              "type": "string"
+            },
+            "text": {
+              "title": "Text",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "text"
+          ],
+          "title": "ContentText",
+          "type": "object"
+        }
+      },
+      "properties": {
+        "actor": {
+          "const": "user",
+          "title": "Actor",
+          "type": "string"
+        },
+        "route_to": {
+          "enum": [
+            "vision",
+            "code"
+          ],
+          "title": "Route To",
+          "type": "string"
+        },
+        "content": {
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ContentText"
+              },
+              {
+                "$ref": "#/$defs/ContentImage"
+              }
+            ]
+          },
+          "title": "Content",
+          "type": "array"
+        }
+      },
+      "required": [
+        "actor",
+        "route_to",
+        "content"
+      ],
+      "title": "PromptCommand",
+      "type": "object"
+    }
+  ]
+}
