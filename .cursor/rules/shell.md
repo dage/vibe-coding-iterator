@@ -1,6 +1,6 @@
 ---
 type: Auto Attached
-globs: ["*.sh"]
+globs: ["**/*.sh"]
 description: Shell script development patterns and standards
 ---
 

@@ -1,0 +1,414 @@
+{
+  "$defs": {
+    "ContentImage": {
+      "properties": {
+        "type": {
+          "const": "image_url",
+          "title": "Type",
+          "type": "string"
+        },
+        "image_url": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Image Url",
+          "type": "object"
+        }
+      },
+      "required": [
+        "type",
+        "image_url"
+      ],
+      "title": "ContentImage",
+      "type": "object"
+    },
+    "ContentText": {
+      "properties": {
+        "type": {
+          "const": "text",
+          "title": "Type",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "text"
+      ],
+      "title": "ContentText",
+      "type": "object"
+    },
+    "ControlPaused": {
+      "properties": {
+        "t": {
+          "const": "control.paused",
+          "title": "T",
+          "type": "string"
+        },
+        "ts": {
+          "title": "Ts",
+          "type": "string"
+        },
+        "run_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Run Id"
+        }
+      },
+      "required": [
+        "t"
+      ],
+      "title": "ControlPaused",
+      "type": "object"
+    },
+    "ControlResumed": {
+      "properties": {
+        "t": {
+          "const": "control.resumed",
+          "title": "T",
+          "type": "string"
+        },
+        "ts": {
+          "title": "Ts",
+          "type": "string"
+        },
+        "run_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Run Id"
+        }
+      },
+      "required": [
+        "t"
+      ],
+      "title": "ControlResumed",
+      "type": "object"
+    },
+    "ErrorEv": {
+      "properties": {
+        "t": {
+          "const": "error",
+          "title": "T",
+          "type": "string"
+        },
+        "ts": {
+          "title": "Ts",
+          "type": "string"
+        },
+        "run_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Run Id"
+        },
+        "msg": {
+          "title": "Msg",
+          "type": "string"
+        },
+        "where": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Where"
+        }
+      },
+      "required": [
+        "t",
+        "msg"
+      ],
+      "title": "ErrorEv",
+      "type": "object"
+    },
+    "IterationStarted": {
+      "properties": {
+        "t": {
+          "const": "iteration.started",
+          "title": "T",
+          "type": "string"
+        },
+        "ts": {
+          "title": "Ts",
+          "type": "string"
+        },
+        "run_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Run Id"
+        },
+        "n": {
+          "title": "N",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "t",
+        "n"
+      ],
+      "title": "IterationStarted",
+      "type": "object"
+    },
+    "PromptSent": {
+      "properties": {
+        "t": {
+          "const": "prompt.sent",
+          "title": "T",
+          "type": "string"
+        },
+        "ts": {
+          "title": "Ts",
+          "type": "string"
+        },
+        "run_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Run Id"
+        },
+        "actor": {
+          "enum": [
+            "vision",
+            "code",
+            "user"
+          ],
+          "title": "Actor",
+          "type": "string"
+        },
+        "to": {
+          "enum": [
+            "vision",
+            "code"
+          ],
+          "title": "To",
+          "type": "string"
+        },
+        "content": {
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ContentText"
+              },
+              {
+                "$ref": "#/$defs/ContentImage"
+              }
+            ]
+          },
+          "title": "Content",
+          "type": "array"
+        },
+        "iteration": {
+          "title": "Iteration",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "t",
+        "actor",
+        "to",
+        "content",
+        "iteration"
+      ],
+      "title": "PromptSent",
+      "type": "object"
+    },
+    "ResponseReceived": {
+      "properties": {
+        "t": {
+          "const": "response.received",
+          "title": "T",
+          "type": "string"
+        },
+        "ts": {
+          "title": "Ts",
+          "type": "string"
+        },
+        "run_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Run Id"
+        },
+        "actor": {
+          "enum": [
+            "vision",
+            "code"
+          ],
+          "title": "Actor",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "iteration": {
+          "title": "Iteration",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "t",
+        "actor",
+        "text",
+        "iteration"
+      ],
+      "title": "ResponseReceived",
+      "type": "object"
+    },
+    "RunStarted": {
+      "properties": {
+        "t": {
+          "const": "run.started",
+          "title": "T",
+          "type": "string"
+        },
+        "ts": {
+          "title": "Ts",
+          "type": "string"
+        },
+        "run_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Run Id"
+        }
+      },
+      "required": [
+        "t"
+      ],
+      "title": "RunStarted",
+      "type": "object"
+    },
+    "ScreenshotCaptured": {
+      "properties": {
+        "t": {
+          "const": "screenshot.captured",
+          "title": "T",
+          "type": "string"
+        },
+        "ts": {
+          "title": "Ts",
+          "type": "string"
+        },
+        "run_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Run Id"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        },
+        "iteration": {
+          "title": "Iteration",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "t",
+        "url",
+        "iteration"
+      ],
+      "title": "ScreenshotCaptured",
+      "type": "object"
+    }
+  },
+  "discriminator": {
+    "mapping": {
+      "control.paused": "#/$defs/ControlPaused",
+      "control.resumed": "#/$defs/ControlResumed",
+      "error": "#/$defs/ErrorEv",
+      "iteration.started": "#/$defs/IterationStarted",
+      "prompt.sent": "#/$defs/PromptSent",
+      "response.received": "#/$defs/ResponseReceived",
+      "run.started": "#/$defs/RunStarted",
+      "screenshot.captured": "#/$defs/ScreenshotCaptured"
+    },
+    "propertyName": "t"
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/RunStarted"
+    },
+    {
+      "$ref": "#/$defs/IterationStarted"
+    },
+    {
+      "$ref": "#/$defs/PromptSent"
+    },
+    {
+      "$ref": "#/$defs/ResponseReceived"
+    },
+    {
+      "$ref": "#/$defs/ScreenshotCaptured"
+    },
+    {
+      "$ref": "#/$defs/ControlPaused"
+    },
+    {
+      "$ref": "#/$defs/ControlResumed"
+    },
+    {
+      "$ref": "#/$defs/ErrorEv"
+    }
+  ]
+}

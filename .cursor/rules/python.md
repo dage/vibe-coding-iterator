@@ -1,6 +1,6 @@
 ---
 type: Auto Attached
-globs: ["src/*.py", "evals/*.py"]
+globs: ["**/*.py"]
 description: Python development patterns and coding standards
 ---
 
