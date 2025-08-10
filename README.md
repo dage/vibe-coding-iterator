@@ -81,7 +81,7 @@ After setup, start the API + engine locally (serves the UI on http://localhost:8
 ```
 
 Notes:
-- Uses the `ai-env` conda environment created by `setup.sh`.
+- Uses the conda environment named by `VIBES_APP_NAME` from your `.env` (created by `setup.sh`).
 - Serves the UI from `web/` and static artifacts from `storage/`.
 - SSE stream: `GET /api/events`
 - Control: `POST /api/control` with `{ "action": "pause" | "resume" }`
