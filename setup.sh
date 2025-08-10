@@ -28,28 +28,33 @@ conda_env_exists() {
 check_env_packages() {
     local env_name="$1"
     local requirements_file="$2"
-    
+
     # Activate environment temporarily to check packages
     eval "$(conda shell.bash hook)"
     conda activate "$env_name" 2>/dev/null || return 1
-    
-    # Read requirements and check each package
+
+    # Use importlib.metadata to check by distribution name (handles hyphens)
     while IFS= read -r line; do
-        # Skip comments and empty lines
         [[ "$line" =~ ^[[:space:]]*# ]] && continue
         [[ -z "${line// }" ]] && continue
-        
-        # Extract package name (before >=, ==, etc.)
-        local package_name=$(echo "$line" | sed 's/[<>=!].*//' | tr -d ' ')
-        
-        if [[ -n "$package_name" ]]; then
-            if ! python -c "import $package_name" 2>/dev/null; then
+        local dist_name=$(echo "$line" | sed 's/[<>=!].*//' | tr -d ' ')
+        if [[ -n "$dist_name" ]]; then
+            python - "$dist_name" <<'PY' 2>/dev/null
+import sys
+from importlib.metadata import version
+dist = sys.argv[1]
+try:
+    version(dist)
+except Exception:
+    raise SystemExit(1)
+PY
+            if [[ $? -ne 0 ]]; then
                 conda deactivate 2>/dev/null || true
                 return 1
             fi
         fi
     done < "$requirements_file"
-    
+
     conda deactivate 2>/dev/null || true
     return 0
 }
@@ -66,6 +71,13 @@ setup_conda_env() {
     eval "$(conda shell.bash hook)"
     conda activate "$env_name"
     pip install -r "$requirements_file"
+    # Install Playwright browsers if playwright is present
+    if python -c "import importlib.util, sys; sys.exit(0 if importlib.util.find_spec('playwright') else 1)"; then
+        echo "Installing Playwright browsers..."
+        python -m playwright install || true
+    fi
+    # Ensure runtime storage directory exists
+    mkdir -p "$SCRIPT_DIR/storage"
     conda deactivate
     
     echo "✓ Conda environment setup completed"
