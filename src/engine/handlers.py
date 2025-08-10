@@ -25,7 +25,7 @@ async def agent_exchange(rid: str, iteration: int, route_to: str, parts: List[Di
     # Emit prompt.sent
     sent = PromptSent(
         t="prompt.sent",
-        actor="code" if route_to == "vision" else "vision",
+        actor="user",  # in v0 the UI/loop is the initiator
         to=route_to,
         content=parts,
         iteration=iteration,

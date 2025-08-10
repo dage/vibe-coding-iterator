@@ -70,6 +70,7 @@
       const t = ev.t;
       if (t === 'control.resumed') setRunning(true);
       if (t === 'control.paused') setRunning(false);
+      if (t === 'iteration.started' && !running) setRunning(true);
       if (t === 'screenshot.captured') {
         const url = ev.url + '?t=' + Date.now();
         shot.src = url;

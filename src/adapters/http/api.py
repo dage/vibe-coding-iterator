@@ -1,11 +1,8 @@
 from __future__ import annotations
 import asyncio, json
-from pathlib import Path
-from typing import AsyncIterator, Dict
+from typing import Dict
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
 from sse_starlette.sse import EventSourceResponse
-from pydantic import BaseModel
 from ...contracts.events import ControlPaused, ControlResumed, ErrorEv
 from ...contracts.commands import ControlCommand, PromptCommand
 from ...engine.bus import publish, subscribe
