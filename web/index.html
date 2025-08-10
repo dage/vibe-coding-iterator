@@ -1,15 +1,105 @@
 <!doctype html>
 <meta charset="utf-8"/>
-<title>Vibe Coding Iterator — API check</title>
-<body>
-  <h1>API alive</h1>
-  <pre id="log"></pre>
-  <script>
-    const log = document.getElementById('log');
-    const es = new EventSource('/api/events');
-    es.onmessage = (e) => { log.textContent += e.data + '\n'; };
-    fetch('/api/control', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({action:'pause'})});
-  </script>
-</body>
+<title>Vibe Coding Iterator</title>
+<style>
+  body { font-family: system-ui, -apple-system, sans-serif; margin: 0; display: grid; grid-template-columns: 280px 1fr 420px; grid-template-rows: auto 1fr; height: 100vh; }
+  header { grid-column: 1 / 4; padding: 8px 12px; border-bottom: 1px solid #ddd; display:flex; gap:12px; align-items:center; }
+  #left { border-right: 1px solid #eee; padding: 12px; overflow:auto; }
+  #center { padding: 12px; overflow:auto; }
+  #right { border-left: 1px solid #eee; padding: 12px; overflow:auto; }
+  #shot { max-width: 100%; height: auto; border:1px solid #ddd; }
+  #thumbs img { width: 120px; height:auto; border:1px solid #ddd; margin: 4px; }
+  .lane { display:flex; flex-direction:column; gap:8px; }
+  .bubble { border:1px solid #ddd; padding:8px; border-radius:8px; background:#fafafa; }
+  .row { display:flex; gap:12px; }
+  .spinner { width:16px; height:16px; border:2px solid #ccc; border-top-color:#444; border-radius:50%; animation: spin 0.8s linear infinite; display:none;}
+  .spinner.running { display:inline-block; }
+  @keyframes spin { to { transform: rotate(360deg);} }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+  small { color:#666 }
+</style>
+<header>
+  <button id="toggle">Play</button>
+  <div id="spin" class="spinner"></div>
+  <div id="status"></div>
+</header>
+<section id="left">
+  <h3>Workspace (later)</h3>
+  <div id="files" data-testid="files"></div>
+</section>
+<section id="center">
+  <img id="shot" alt="latest screenshot"/>
+  <div id="thumbs"></div>
+</section>
+<section id="right">
+  <h3>Agent Exchange</h3>
+  <div class="row">
+    <div style="flex:1">
+      <h4>Vision</h4>
+      <div id="lane-vision" class="lane"></div>
+    </div>
+    <div style="flex:1">
+      <h4>Code</h4>
+      <div id="lane-code" class="lane"></div>
+    </div>
+  </div>
+  <hr/>
+  <div>
+    <input id="prompt" placeholder="Type prompt…" style="width:70%"/>
+    <select id="route"><option value="code">→ code</option><option value="vision">→ vision</option></select>
+    <button id="send">Send</button>
+  </div>
+  <small>State reflects SSE events; Play/Pause via /api/control.</small>
+</section>
+<script>
+  const toggle = document.getElementById('toggle');
+  const spin = document.getElementById('spin');
+  const shot = document.getElementById('shot');
+  const thumbs = document.getElementById('thumbs');
+  const laneV = document.getElementById('lane-vision');
+  const laneC = document.getElementById('lane-code');
+  const status = document.getElementById('status');
+
+  let running = false;
+  function setRunning(r){ running = r; toggle.textContent = r ? 'Pause' : 'Play'; spin.classList.toggle('running', r); }
+
+  const es = new EventSource('/api/events');
+  es.onmessage = (e) => {
+    try {
+      const ev = JSON.parse(e.data);
+      const t = ev.t;
+      if (t === 'control.resumed') setRunning(true);
+      if (t === 'control.paused') setRunning(false);
+      if (t === 'screenshot.captured') {
+        const url = ev.url + '?t=' + Date.now();
+        shot.src = url;
+        const a = document.createElement('a'); a.href = ev.url; a.target = '_blank';
+        const img = document.createElement('img'); img.src = url;
+        a.appendChild(img); thumbs.appendChild(a);
+      }
+      if (t === 'prompt.sent') {
+        const el = document.createElement('div'); el.className = 'bubble'; el.textContent = JSON.stringify(ev.content);
+        (ev.to === 'vision' ? laneV : laneC).appendChild(el);
+      }
+      if (t === 'response.received') {
+        const el = document.createElement('div'); el.className = 'bubble'; el.textContent = ev.text;
+        (ev.actor === 'vision' ? laneV : laneC).appendChild(el);
+      }
+    } catch {}
+  };
+
+  toggle.onclick = async () => {
+    const action = running ? 'pause' : 'resume';
+    await fetch('/api/control', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({action})});
+  };
+
+  document.getElementById('send').onclick = async () => {
+    const text = document.getElementById('prompt').value.trim();
+    const route_to = document.getElementById('route').value;
+    if (!text) return;
+    await fetch('/api/prompt', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({actor:'user', route_to, content:[{type:'text', text}]})});
+    document.getElementById('prompt').value = '';
+  };
+</script>
 
 
