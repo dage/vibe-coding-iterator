@@ -72,6 +72,21 @@ cd vibe-coding-iterator
 
 The setup script handles environment setup including project name input, conda environment creation, dependency installation, and OpenRouter API configuration and doing some simple integration tests to make sure everything is 100% ready and working for the vibe coding session.
 
+## Run (dev server)
+
+After setup, start the API + engine locally (serves the UI on http://localhost:8000/):
+
+```bash
+./start.sh
+```
+
+Notes:
+- Uses the `ai-env` conda environment created by `setup.sh`.
+- Serves the UI from `web/` and static artifacts from `storage/`.
+- SSE stream: `GET /api/events`
+- Control: `POST /api/control` with `{ "action": "pause" | "resume" }`
+- Prompt: `POST /api/prompt` with `{ "actor":"user", "route_to":"vision"|"code", "content":[...] }`
+
 
 ## Architecture
 
