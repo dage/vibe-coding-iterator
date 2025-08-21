@@ -2,6 +2,11 @@
 
 AI-driven development system for graphical web applications using autonomous vision-guided iteration loops and open source models.
 
+## Status
+
+I will no longer be developing on this project as it turned out to be too bloated and complex to iterate on with my current experimental methods. I've now taken the core principles and best parts over to a much simpler terminal based project at [simple-vibe-iterator](https://github.com/dage/simple-vibe-iterator).
+
+
 ## Project Description
 
 Vibe Coding Iterator extends traditional vibe coding by introducing autonomous vision-guided iteration after an initial single-shot implementation. The system targets graphical intensive web applications including special effects and games.
