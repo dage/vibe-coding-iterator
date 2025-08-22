@@ -4,7 +4,7 @@ AI-driven development system for graphical web applications using autonomous vis
 
 ## Status
 
-I will no longer be developing on this project as it turned out to be too bloated and complex to iterate on with my current experimental methods. I've now taken the core principles and best parts over to a much simpler terminal based project at [simple-vibe-iterator](https://github.com/dage/simple-vibe-iterator).
+I will no longer be developing on this project as it turned out to be too bloated and complex to iterate on with my current methods. I've now taken the core principles and best parts over to a much simpler project at [simple-vibe-iterator](https://github.com/dage/simple-vibe-iterator).
 
 
 ## Project Description
